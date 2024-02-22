@@ -2,7 +2,7 @@ import torch
 from torchvision.datasets import ImageFolder
 from torchvision import transforms
 
-def ImageNet_train_dataset(path= "/tmp/imagenet/train/", transform = True):
+def ImageNet_train_dataset(path= "/path/to/imagenet/train/", transform = True):
     if transform:
         transform = transforms.Compose([transforms.Resize(256),
                                         transforms.CenterCrop(256),
@@ -13,7 +13,7 @@ def ImageNet_train_dataset(path= "/tmp/imagenet/train/", transform = True):
     train_dataset = ImageFolder(path, transform=transform)
     return train_dataset
 
-def ImageNet_val_dataset(path= "/tmp/imagenet/val/", transform = True):
+def ImageNet_val_dataset(path= "/path/to/imagenet/val/", transform = True):
     if transform:
         transform = transforms.Compose([transforms.Resize(256),
                                         transforms.CenterCrop(256),
@@ -24,7 +24,7 @@ def ImageNet_val_dataset(path= "/tmp/imagenet/val/", transform = True):
     val_dataset = ImageFolder(path, transform=transform)
     return val_dataset
 
-def CBSD68_dataset(path = "data/CBSD68-dataset/CBSD68/original"):
+def CBSD68_dataset(path = "data/CBSD68/"):
     '''Returns images normalized in [0,1]'''
     transform = transforms.Compose([transforms.Resize(256),
                                     transforms.CenterCrop(256),
@@ -40,7 +40,7 @@ def McMaster_dataset(path = "data/McMaster/"):
     dataset = ImageFolder(path, transform=transform)
     return dataset
 
-def Kodak24_dataset(path = "data/Kodak24-dataset/Kodak-Lossless-True-Color-Image-Suite/Kodak_folder"):
+def Kodak24_dataset(path = "data/Kodak24/"):
     '''Returns images normalized in [0,1]'''
     transform = transforms.Compose([transforms.Resize(256),
                                     transforms.CenterCrop(256),
