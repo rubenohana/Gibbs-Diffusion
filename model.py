@@ -6,11 +6,11 @@ import os, glob
 from modules import *
 #from momo import MomoAdam
 from utils import get_colored_noise_2d
-from inference_pytorch.colored_ps import ColoredPS
-import inference_pytorch.utils as iut
+from inference_utils.colored_ps import ColoredPS
+import inference_utils.utils as iut
 from data import get_noise_level_estimate
 from tqdm import tqdm
-from inference_pytorch.hmc import HMC
+from inference_utils.hmc import HMC
 
 
 class GDiff(pl.LightningModule):
@@ -19,8 +19,9 @@ class GDiff(pl.LightningModule):
                  diffusion_steps, 
                  img_depth = 3, 
                  lr = 2e-4,
-                 weight_decay = 0):#, 
-                 #phi_ps = None):
+                 weight_decay = 0):
+        '''Gibbs-Diffusion model. The LightningModule allows for Data Parallel training quite easily. Training is done on Imagenet for 100 epochs, and takes about 40 hours a single node of 8 H100s GPUs. See train.py for details.'''
+
         super().__init__()
         self.diffusion_steps = diffusion_steps
         self.beta_small = 0.1 / self.diffusion_steps #1e-4
@@ -76,6 +77,7 @@ class GDiff(pl.LightningModule):
         self.outc = OutConv(64, self.img_depth)
 
     def pos_encoding(self, t, channels, embed_size):
+        '''Positinal encoding of time, as in the original transformer paper. '''
         inv_freq = 1.0 / (10000 ** (torch.arange(0, channels, 2, device=self.device).float() / channels))
         pos_enc_a = torch.sin(t.repeat(1, channels // 2) * inv_freq)
         pos_enc_b = torch.cos(t.repeat(1, channels // 2) * inv_freq)
@@ -84,7 +86,7 @@ class GDiff(pl.LightningModule):
 
     def forward(self, x, t, phi_ps=None):
         """
-        Model is U-Net with added positional encodings and self-attention layers.
+        The model is a U-Net with added positional encodings, embedding of \varphi  and self-attention layers. The total number of parameters is ~70M.
         """
         if phi_ps is None:
             phi_ps = torch.zeros(x.shape[0],1).to(self.device).float()
@@ -114,7 +116,7 @@ class GDiff(pl.LightningModule):
 
     def get_loss(self, batch, batch_idx, phi_ps = None):
         """
-        Corresponds to Algorithm 1 from (Ho et al., 2020).
+        Corresponds to Algorithm 1 from (Ho et al., 2020), but with colored noise.
         """
         #alpha should be a tensor of the size of the batch_size, we want a alpha different for each batch
         
@@ -194,21 +196,18 @@ class GDiff(pl.LightningModule):
                          sigma_min=0.04,
                          sigma_max=0.3,
                          return_chains=True):
+        '''Gibbs-Diffusion: performs blind denoising with a Gibbs sampler alternating between the diffusion model step returning a sample from p(x|y,phi) and the HMC step that return estimates of parameters from p(phi|x,y).'''
+
         num_samples = y.shape[0]
         ps_model = ColoredPS(norm_input_phi=norm_phi_mode)
-        #
+        
         # Prior, likelihood, and posterior functions
-        #
-
         sample_phi_prior = lambda n: iut.sample_prior_phi(n, norm=norm_phi_mode, device=self.device) # Sample uniformly in [-1, 1]
         log_likelihood = lambda phi, x: iut.log_likelihood_eps_phi_sigma(phi[...,:1], phi[...,1:], x, ps_model)
         log_prior = lambda phi: iut.log_prior_phi_sigma(phi[...,:1], phi[...,1], sigma_min, sigma_max, norm=norm_phi_mode)
         log_posterior = lambda phi, x: log_likelihood(phi, x) + log_prior(phi) #  Log posterior (not normalized by the evidence).
 
-        #
         # Bounds and collision management
-        #
-
         phi_min_norm, phi_max_norm = iut.get_phi_bounds(device=self.device) #change to work in [-1,1]
         phi_min_norm, phi_max_norm = iut.normalize_phi(phi_min_norm, mode=norm_phi_mode), iut.normalize_phi(phi_max_norm, mode=norm_phi_mode) #change to work in [-1,1]
         sigma_min_tensor = torch.tensor([sigma_min]).to(self.device)
@@ -228,9 +227,7 @@ class GDiff(pl.LightningModule):
 
         print("Normalized prior bounds are:", phi_min_norm, phi_max_norm)
 
-        #
-        # Inference
-        #
+        # Inference on the noise level \sigma and the parameters \varphi of the covariance of the noise
 
         # Repeat the data for each chain
         y_batch = y.repeat(num_chains_per_sample, 1, 1, 1)
@@ -247,14 +244,13 @@ class GDiff(pl.LightningModule):
         phi_k = phi_0
         step_size, inv_mass_matrix = None, None
         for n in tqdm(range(n_it_gibbs + n_it_burnin)):
+
             # Diffusion step
             timesteps = self.get_closest_timestep(phi_k[:, 1])
             x_k = self.denoise_samples_batch_time(yt_batch, timesteps, phi_ps=iut.unnormalize_phi(phi_k[:, :1], mode=norm_phi_mode))
             eps_k = (y_batch - x_k)
             
-            #
             # HMC step
-            #
             log_prob = lambda phi: log_posterior(phi, eps_k)
             def log_prob_grad(phi):
                 """ Compute the log posterior and its gradient."""
@@ -263,6 +259,7 @@ class GDiff(pl.LightningModule):
                 log_prob_val = log_posterior(phib, eps_k)
                 grad_log_prob = torch.autograd.grad(log_prob_val, phib, grad_outputs=torch.ones_like(log_prob_val))[0]
                 return log_prob_val.detach(), grad_log_prob
+            
             if n == 0:
                 hmc = HMC(log_prob, log_prob_and_grad=log_prob_grad)
                 hmc.set_collision_fn(collision_manager)
@@ -294,6 +291,7 @@ class GDiff(pl.LightningModule):
                          n_it_burnin=10, 
                          avg_pmean = 10,
                          return_chains=True):
+        '''Performs blind denoising with the posterior mean estimator.'''
         if return_chains:
             phi_all, x_all = self.blind_denoising(y, yt, norm_phi_mode=norm_phi_mode, num_chains_per_sample=num_chains_per_sample, n_it_gibbs=n_it_gibbs, n_it_burnin=n_it_burnin, return_chains=return_chains)
         else:
@@ -307,6 +305,8 @@ class GDiff(pl.LightningModule):
 
 
     def get_closest_timestep(self, noise_level, ret_sigma=False):
+        '''Returns the closest timestep to the given noise level. If ret_sigma is True, also returns the noise level corresponding to the closest timestep.'''
+
         alpha_bar_t = self.alpha_bar_t.to(noise_level.device)
         all_noise_levels = torch.sqrt((1-alpha_bar_t)/alpha_bar_t).reshape(-1, 1).repeat(1, noise_level.shape[0])
         closest_timestep = torch.argmin(torch.abs(all_noise_levels - noise_level), dim=0)
@@ -350,7 +350,6 @@ def load_model(diffusion_steps=10000,
                                         diffusion_steps = diffusion_steps, 
                                         img_depth=n_channels) 
     model.to(device)
-    #model.eval()
     return model
 
 

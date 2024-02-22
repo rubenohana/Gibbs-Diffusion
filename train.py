@@ -3,7 +3,6 @@ import pytorch_lightning as pl
 from model import GDiff, load_model
 from torch.utils.data import DataLoader
 from data import GDiff_dataset
-import imageio
 import glob
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
@@ -47,7 +46,8 @@ def main(hparams):
     #Use wandb or not
     wandb = hparams.wandb
 
-    default_root_dir=f"./ckpt_hyperparam_tuning/{dataset_choice}_training/{diffusion_steps}steps_{optimizer}_{lr}lr_{batch_size}bs_{max_epoch}epochs/"
+    #directory where to store the checkpoints:
+    default_root_dir=f"./model_checkpoints/{dataset_choice}_training/{diffusion_steps}steps_{optimizer}_{lr}lr_{batch_size}bs_{max_epoch}epochs/"
 
     #make directory if not existing:
     if not os.path.exists(default_root_dir):
@@ -87,7 +87,7 @@ def main(hparams):
                                 root_dir='model_checkpoints/',
                                 device='gpu')
         else:
-            print("model was only pretrained on Imagenet, no pretrained model to load on your dataset, please change the root_dir")
+            print("model was only pretrained on Imagenet, no pretrained model to load on your dataset")
             raise NotImplementedError
     else:
         model = GDiff(in_size = in_size_image, 
@@ -101,7 +101,7 @@ def main(hparams):
                                    config = hyperparameters_config, 
                                    entity = 'rubenohana', 
                                    group= wandb_group_name, 
-                                   name=f"{dataset_choice}_ALPHAPSEMBED_steps{diffusion_steps}_lr{lr}_bs{batch_size}_opt{optimizer}_wd{weight_decay}")
+                                   name=f"{dataset_choice}_steps{diffusion_steps}_lr{lr}_bs{batch_size}_opt{optimizer}_wd{weight_decay}")
     if enable_ckpt:
         checkpoint_callback = ModelCheckpoint(dirpath=default_root_dir, 
                                           monitor=None)

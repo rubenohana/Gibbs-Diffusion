@@ -3,90 +3,9 @@ from torch import fft
 from tqdm import tqdm
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
+import numpy as np
 
-
-
-def get_colored_noise(shape, phi = 0,  batch_dim=False, ret_psd=False):
-    '''Generates colored noise with a power spectrum S(k) ~ k^phi'''
-
-    shape = tuple(shape) if isinstance(shape, (list, tuple)) else (shape, )
-    ndim = len(shape) - 1 if batch_dim else len(shape)
-    data_shape = shape[1:] if batch_dim else shape
-
-    N = data_shape[0]
-
-    for i in range(ndim):
-        assert data_shape[i] == N, "data_shape must be of the form (N, N, ...)"
-
-    # Build an array of isotropic wavenumbers
-    wn = torch.fft.fftfreq(N).reshape((N,) + (1,) * (ndim - 1))
-
-    S = torch.zeros(data_shape)
-    for i in range(ndim):
-        S += torch.moveaxis(wn, 0, i).pow(2)
-
-    S.pow_(phi/2)
-    S[0, 0] = 0.0
-    S.div_(torch.mean(S))  # Normalize S to keep std = 1
     
-    X_white = torch.fft.fftn(torch.randn(*shape), dim=tuple(range(1, ndim + 1) if batch_dim else range(ndim)))
-    X_shaped = X_white * torch.sqrt(S) 
-    noises = torch.fft.ifftn(X_shaped, dim=tuple(range(1, ndim + 1) if batch_dim else range(ndim))).real
-
-    if ret_psd:
-        return noises, S #**2 # I think with modifications of S, we should return S and not S**2, confirm with co-authors
-    else:
-        return noises
-    
-
-
-def power_spectrum_iso_torch(x, bins=None, batch_dim=False):
-    #THE TORCHIFICATION DIDN'T WORK WELL, TO BE CORRECTED
-    '''Computes the isotropic power spectrum of a batch of images'''
-    if not batch_dim:
-        x = x.unsqueeze(0)
-    data_shape = x.shape[1:]
-    N = data_shape[0]
-    ndim = len(data_shape)
-    spatial_dims = list(range(1, ndim + 1))
-    device = x.device
-
-    # Compute the power spectrum
-    psx = torch.abs(torch.fft.fftn(x, dim=spatial_dims))**2
-    
-    # Build an array of isotropic wavenumbers
-    wn = torch.fft.fftfreq(N)
-    wn = wn.reshape((N,) + (1,) * (ndim - 1))
-    wn_iso = torch.zeros(data_shape)
-    for i in range(ndim):
-            wn_iso += torch.moveaxis(wn, 0, i).pow(2)
-
-    wn_iso.sqrt_()
-
-    if bins is None:
-        bins = torch.sort(torch.unique(wn_iso))[0].to(device)
-
-    BINS = len(bins)
-    index = torch.bucketize(wn_iso, bins).to(device)
-    index_mask = F.one_hot(index, BINS+1).to(device) ## we will discard the first bin
-    index_mask = index_mask.unsqueeze(0)
-
-    counts = torch.sum(index_mask, dim=spatial_dims)
-    ps_mean = torch.sum(index_mask * psx.unsqueeze(-1), dim=spatial_dims) / counts
-
-    ps_std = torch.sqrt(torch.sum(index_mask * (psx.unsqueeze(-1) - ps_mean.reshape(-1, 1, 1, BINS +1)) ** 2, dim=spatial_dims) / counts)
-
-    ps_mean, ps_std = ps_mean[:,1:], ps_std[:,1:] ## discard the first bin
-
-    return bins, ps_mean, ps_std
-
-def plot_spectrum_torch(s, plot_label = None, batch_dim = True, plot_std = False, bins = None):
-    #THE TORCHIFICATION DIDN'T WORK WELL, TO BE CORRECTED
-    bins, ps_mean, ps_std = power_spectrum_iso(s, batch_dim=batch_dim, bins=bins)
-    if plot_std:
-        plt.fill_between(bins, ps_mean.mean(dim = 0) - ps_std.mean(dim = 0), ps_mean.mean(dim = 0) + ps_std.mean(dim = 0), alpha=0.2, label='_nolegend_')
-    return plt.loglog(bins, ps_mean.mean(dim=0), label = plot_label)
-
 def get_colored_noise_2d(shape, phi = 0, ret_psd=False, device = None):
     """
     Args:
@@ -125,7 +44,7 @@ def get_colored_noise_2d(shape, phi = 0, ret_psd=False, device = None):
     else:
         return noises
     
-import numpy as np
+
 def plot_ps(bins, ps_list, labels=None, show=False, save_name=None):
     bins_centers = (bins[:-1] + bins[1:])/2
 

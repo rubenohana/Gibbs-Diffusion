@@ -2,7 +2,7 @@ import torch
 from torchvision.datasets import ImageFolder
 from torchvision import transforms
 
-def ImageNet_train_dataset(path= "/path/to/imagenet/train/", transform = True):
+def ImageNet_train_dataset(path= "/tmp/imagenet/train/", transform = True):
     if transform:
         transform = transforms.Compose([transforms.Resize(256),
                                         transforms.CenterCrop(256),
@@ -13,7 +13,7 @@ def ImageNet_train_dataset(path= "/path/to/imagenet/train/", transform = True):
     train_dataset = ImageFolder(path, transform=transform)
     return train_dataset
 
-def ImageNet_val_dataset(path= "/path/to/imagenet/val/", transform = True):
+def ImageNet_val_dataset(path= "/tmp/imagenet/val/", transform = True):
     if transform:
         transform = transforms.Compose([transforms.Resize(256),
                                         transforms.CenterCrop(256),
@@ -77,7 +77,7 @@ def get_noise_level_estimate(y, sigma_min, sigma_max):
     Heuristic is calibrated for ImageNet and alpha in [-1, 1]. See calibration_notebooks/heuristic_sigma_estimation.ipynb. """
     assert y.ndim == 4 or y.ndim == 3 # (N, C, H, W) or (C, H, W)
     y_std = torch.std(y, dim=(-1, -2, -3))
-    sigma_est = y_std*1.15 - 0.17
+    sigma_est = y_std*1.15 - 0.17 # Heuristic from heuristic_sigma_estimation.ipynb for Imagenet
     range_sigma = sigma_max - sigma_min
     sigma_est = torch.clamp(sigma_est, min=sigma_min + 0.05*range_sigma, max=sigma_max - 0.05*range_sigma)
     return sigma_est
