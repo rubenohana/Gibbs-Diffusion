@@ -1,11 +1,11 @@
 import torch
-import pytorch_lightning as pl
+import lightning as pl
 from model import GDiff, load_model
 from torch.utils.data import DataLoader
 from data import GDiff_dataset
 import glob
-from pytorch_lightning.loggers import WandbLogger
-from pytorch_lightning.callbacks import ModelCheckpoint
+from lightning.pytorch.loggers import WandbLogger
+from lightning.pytorch.callbacks import ModelCheckpoint
 from argparse import ArgumentParser
 import os
 
@@ -130,7 +130,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", default=128, type=int)
     #Logging Wandb
     parser.add_argument("--wandb", default=False, type = bool)
-    parser.add_argument("--wandb_group_name", default="HP_v3", type=str)
+    parser.add_argument("--wandb_group_name", default="Hyperparameter_tuning", type=str)
     #Model checkpointing
     parser.add_argument("--enable_ckpt", default=True, type = bool)
     parser.add_argument("--load_model", default=False, type = bool)
