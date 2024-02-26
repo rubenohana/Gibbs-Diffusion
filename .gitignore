@@ -7,4 +7,4 @@ wandb/
 lightning_logs/
 .hypothesis/
 calibration_notebooks/
-submit_batch_Imagenet.sh
+bash_scripts/
