@@ -28,7 +28,7 @@ class SAWrapper(nn.Module):
     def __init__(self, h_size, num_s):
         super(SAWrapper, self).__init__()
         self.sa = nn.Sequential(*[SelfAttention(h_size) for _ in range(1)])
-        self.num_s = int(num_s) #can we remove the int?
+        self.num_s = int(num_s)
         self.h_size = h_size
 
     def forward(self, x):
@@ -36,10 +36,6 @@ class SAWrapper(nn.Module):
         x = self.sa(x)
         x = x.swapaxes(2, 1).view(-1, self.h_size, self.num_s, self.num_s)
         return x
-
-
-# U-Net code adapted from: https://github.com/milesial/Pytorch-UNet
-
 
 class DoubleConv(nn.Module):
     def __init__(self, in_channels, out_channels, mid_channels=None, residual=False):
@@ -75,21 +71,13 @@ class Down(nn.Module):
     def forward(self, x):
         return self.maxpool_conv(x) #+ self.te(x) 
 
-
 class Up(nn.Module):
-    def __init__(self, in_channels, out_channels, bilinear=True):
+    def __init__(self, in_channels, out_channels):
         super().__init__()
-        self.bilinear = bilinear
-        # if bilinear, use the normal convolutions to reduce the number of channels
-        if self.bilinear:
-            self.up = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=True)
-            self.conv = DoubleConv(in_channels, in_channels, residual=True)
-            self.conv2 = DoubleConv(in_channels, out_channels, in_channels // 2)
-        else:
-            self.up = nn.ConvTranspose2d(
-                in_channels, in_channels // 2, kernel_size=2, stride=2
-            )
-            self.conv = DoubleConv(in_channels, out_channels)
+        self.up = nn.ConvTranspose2d(
+            in_channels, in_channels // 2, kernel_size=2, stride=2
+        )
+        self.conv = DoubleConv(in_channels, out_channels)
 
     def forward(self, x1, x2):
         x1 = self.up(x1)
@@ -100,8 +88,6 @@ class Up(nn.Module):
         x1 = F.pad(x1, [diffX // 2, diffX - diffX // 2, diffY // 2, diffY - diffY // 2])
         x = torch.cat([x2, x1], dim=1)
         x = self.conv(x)
-        if self.bilinear:
-            x = self.conv2(x)
         return x
 
 
@@ -113,9 +99,9 @@ class OutConv(nn.Module):
     def forward(self, x):
         return self.conv(x)
     
-class alpha_embedding(nn.Module):
+class phi_embedding(nn.Module):
     def __init__(self, alpha_dim, in_dim=100, out_dim=100):
-        super(alpha_embedding, self).__init__()
+        super(phi_embedding, self).__init__()
         self.mlp = nn.Sequential(
             nn.Linear(alpha_dim, in_dim),
             nn.SiLU(),

@@ -3,7 +3,7 @@ import torch.nn as nn
 import lightning as pl
 import math
 import os, glob
-from .modules import *
+from .modules import DoubleConv, Down, Up, OutConv, phi_embedding, SAWrapper
 from inference_utils.utils import get_colored_noise_2d
 import inference_utils.utils_hmc as iut
 import sys
@@ -20,69 +20,72 @@ class GDiff(pl.LightningModule):
                  img_depth = 3, 
                  lr = 2e-4,
                  weight_decay = 0):
-        '''Gibbs-Diffusion model. The LightningModule allows for Data Parallel training quite easily. Training is done on Imagenet for 100 epochs, and takes about 40 hours a single node of 8 H100s GPUs. See train.py for details.'''
+        """
+        Gibbs-Diffusion model. 
+        The LightningModule allows for Data Parallel training easily. 
+        Training is done on Imagenet for 100 epochs, and takes about 40 hours a single node of 8 H100s GPUs. 
+        See train.py for details.
+        """
 
         super().__init__()
         self.diffusion_steps = diffusion_steps
-        self.beta_small = 0.1 / self.diffusion_steps #1e-4
-        self.beta_large = 20 / self.diffusion_steps #0.02
-        self.timesteps = torch.arange(0, self.diffusion_steps)#.long()
+        self.beta_small = 0.1 / self.diffusion_steps
+        self.beta_large = 20 / self.diffusion_steps
+        self.timesteps = torch.arange(0, self.diffusion_steps)
         self.beta_t = self.beta_small + (self.timesteps / self.diffusion_steps) * (self.beta_large - self.beta_small)
         self.alpha_t = 1 - self.beta_t
-        self.alpha_bar_t = torch.cumprod(self.alpha_t, dim=0) ## Cumprod starts at alpha_0 not 1...
+        self.alpha_bar_t = torch.cumprod(self.alpha_t, dim=0) 
 
-        self.in_size = in_size #32*32 for cifar10
+        self.in_size = in_size
         H = math.sqrt(in_size)
         self.img_depth = img_depth
         
-        alpha_dim = 1 #number of dimensions of alpha
+        phi_dim = 1 #number of dimensions of phi
         self.lr = lr
         self.weight_decay = weight_decay
         self.save_hyperparameters()
 
-
-        self.bilinear = False #True  # need to test with false
-        factor = 2 if self.bilinear else 1 #need to solve the bilinear factor
         self.inc = DoubleConv(self.img_depth, 64) #img_depth is the number of channels
         nc_1 = 128
         self.down1 = Down(64, nc_1) #double the number of channels, but H/2 and W/2
-        self.alpha_embed1 = alpha_embedding(alpha_dim, in_dim = 100, out_dim=nc_1)
+        self.alpha_embed1 = phi_embedding(phi_dim, in_dim = 100, out_dim=nc_1)
         nc_2 = 256
         self.down2 = Down(128, nc_2)
-        self.alpha_embed2 = alpha_embedding(alpha_dim, in_dim = 100, out_dim=nc_2)
-        factor = 2 if self.bilinear else 1
-        nc_3 = 512 // factor
+        self.alpha_embed2 = phi_embedding(phi_dim, in_dim = 100, out_dim=nc_2)
+        nc_3 = 512 
         self.down3 = Down(256, nc_3)
-        self.alpha_embed3 = alpha_embedding(alpha_dim, in_dim = 100, out_dim=nc_3)
-        self.sa3 = SAWrapper(512 // factor, int(H/8))
-        nc_4 = 1024 // factor
-        self.down4 = Down(512 // factor, nc_4)
-        self.alpha_embed4 = alpha_embedding(alpha_dim, in_dim = 100, out_dim=nc_4)
-        self.sa4 = SAWrapper(1024 // factor, int(H/16)) #if H = 256: bootleneck dim = 16
+        self.alpha_embed3 = phi_embedding(phi_dim, in_dim = 100, out_dim=nc_3)
+        self.sa3 = SAWrapper(512, int(H/8))
+        nc_4 = 1024
+        self.down4 = Down(512, nc_4)
+        self.alpha_embed4 = phi_embedding(phi_dim, in_dim = 100, out_dim=nc_4)
+        self.sa4 = SAWrapper(1024, int(H/16)) #if H = 256: bootleneck dim = 16
         
-        self.bottleneck = DoubleConv(1024 // factor, 1024 // factor)
-        self.att_bottleneck = SAWrapper(1024 // factor, int(H/16))
+        self.bottleneck = DoubleConv(1024, 1024)
+        self.att_bottleneck = SAWrapper(1024, int(H/16))
         nc_5 = 512
-        self.up1 = Up(1024, nc_5, self.bilinear)
-        self.alpha_embed5 = alpha_embedding(alpha_dim, in_dim = 100, out_dim=nc_5)
-        nc_6 = 256 // factor
-        self.up2 = Up(512, 256 // factor, self.bilinear)
-        self.alpha_embed6 = alpha_embedding(alpha_dim, in_dim = 100, out_dim=nc_6)
-        nc_7 = 128 // factor
-        self.up3 = Up(256, 128 // factor, self.bilinear)
-        self.alpha_embed7 = alpha_embedding(alpha_dim, in_dim = 100, out_dim=nc_7)
+        self.up1 = Up(1024, nc_5)
+        self.alpha_embed5 = phi_embedding(phi_dim, in_dim = 100, out_dim=nc_5)
+        nc_6 = 256
+        self.up2 = Up(512, 256)
+        self.alpha_embed6 = phi_embedding(phi_dim, in_dim = 100, out_dim=nc_6)
+        nc_7 = 128
+        self.up3 = Up(256, 128)
+        self.alpha_embed7 = phi_embedding(phi_dim, in_dim = 100, out_dim=nc_7)
         nc_8 = 64
-        self.up4 = Up(128, 64, self.bilinear)
-        self.alpha_embed8 = alpha_embedding(alpha_dim, in_dim = 100, out_dim=nc_8)
+        self.up4 = Up(128, 64)
+        self.alpha_embed8 = phi_embedding(phi_dim, in_dim = 100, out_dim=nc_8)
         self.outc = OutConv(64, self.img_depth)
 
     def pos_encoding(self, t, channels, embed_size):
-        '''Positinal encoding of time, as in the original transformer paper. '''
+        """
+        Positinal encoding of time, as in the original transformer paper. 
+        """
         inv_freq = 1.0 / (10000 ** (torch.arange(0, channels, 2, device=self.device).float() / channels))
         pos_enc_a = torch.sin(t.repeat(1, channels // 2) * inv_freq)
         pos_enc_b = torch.cos(t.repeat(1, channels // 2) * inv_freq)
         pos_enc = torch.cat([pos_enc_a, pos_enc_b], dim=-1)
-        return pos_enc.view(-1, channels, 1, 1)#.repeat(1, 1, embed_size, embed_size)
+        return pos_enc.view(-1, channels, 1, 1)
 
     def forward(self, x, t, phi_ps=None):
         """
@@ -95,20 +98,19 @@ class GDiff(pl.LightningModule):
             phi_ps = torch.tensor(phi_ps).reshape(-1,1).to(self.device).float()
         else:
             pass
-        bs, n_channels, H, W = x.shape #added here, checks it works
-        factor = 2 if self.bilinear else 1
+        bs, n_channels, H, W = x.shape 
         x1 = self.inc(x) #dim = 256, n_channel = 64
         x2 = self.down1(x1) + self.pos_encoding(t, 128, int(H/2)) + self.alpha_embed1(phi_ps).unsqueeze(-1).unsqueeze(-1) #dim = 128, n_channel = 128, unsqueeze for broadcasting on HxW
         x3 = self.down2(x2) + self.pos_encoding(t, 256, int(H/4)) + self.alpha_embed2(phi_ps).unsqueeze(-1).unsqueeze(-1) #dim = 64, n_channel = 256
-        x4 = self.down3(x3) + self.pos_encoding(t, 512 // factor, int(H/8)) + self.alpha_embed3(phi_ps).unsqueeze(-1).unsqueeze(-1)#dim = 32, n_channel = 512 // factor
-        x4 = self.sa3(x4) #dim = 32, n_channel = 512 // factor
-        x5 = self.down4(x4) + self.pos_encoding(t, 1024 // factor, int(H/16)) + self.alpha_embed4(phi_ps).unsqueeze(-1).unsqueeze(-1) #dim = 16, n_channel = 1024 // factor
-        x5 = self.sa4(x5) #dim = 16, n_channel = 1024 // factor
-        x_bottleneck = self.bottleneck(x5) + self.pos_encoding(t, 1024 // factor, int(H/16)) #dim = 16, n_channel = 1024 // factor
-        x_bottleneck = self.att_bottleneck(x_bottleneck) #dim = 16, n_channel = 1024 // factor
-        x = self.up1(x_bottleneck, x4) + self.pos_encoding(t, 512 // factor, int(H/8)) + self.alpha_embed5(phi_ps).unsqueeze(-1).unsqueeze(-1) #dim = 32, n_channel = 512 // factor
-        x = self.up2(x, x3) + self.pos_encoding(t, 256 // factor, int(H/4)) + self.alpha_embed6(phi_ps).unsqueeze(-1).unsqueeze(-1) #dim = 64, n_channel = 256 // factor
-        x = self.up3(x, x2) + self.pos_encoding(t, 128 // factor, int(H/2)) + self.alpha_embed7(phi_ps).unsqueeze(-1).unsqueeze(-1) #dim = 128, n_channel = 128 // factor
+        x4 = self.down3(x3) + self.pos_encoding(t, 512, int(H/8)) + self.alpha_embed3(phi_ps).unsqueeze(-1).unsqueeze(-1)#dim = 32, n_channel = 512
+        x4 = self.sa3(x4) #dim = 32, n_channel = 512 
+        x5 = self.down4(x4) + self.pos_encoding(t, 1024, int(H/16)) + self.alpha_embed4(phi_ps).unsqueeze(-1).unsqueeze(-1) #dim = 16, n_channel = 1024
+        x5 = self.sa4(x5) #dim = 16, n_channel = 1024 
+        x_bottleneck = self.bottleneck(x5) + self.pos_encoding(t, 1024, int(H/16)) #dim = 16, n_channel = 1024 
+        x_bottleneck = self.att_bottleneck(x_bottleneck) #dim = 16, n_channel = 1024
+        x = self.up1(x_bottleneck, x4) + self.pos_encoding(t, 512, int(H/8)) + self.alpha_embed5(phi_ps).unsqueeze(-1).unsqueeze(-1) #dim = 32, n_channel = 512
+        x = self.up2(x, x3) + self.pos_encoding(t, 256, int(H/4)) + self.alpha_embed6(phi_ps).unsqueeze(-1).unsqueeze(-1) #dim = 64, n_channel = 256
+        x = self.up3(x, x2) + self.pos_encoding(t, 128, int(H/2)) + self.alpha_embed7(phi_ps).unsqueeze(-1).unsqueeze(-1) #dim = 128, n_channel = 128
         x = self.up4(x, x1) + self.pos_encoding(t, 64, int(H)) + self.alpha_embed8(phi_ps).unsqueeze(-1).unsqueeze(-1)#dim = 256, n_channel = 64
         output = self.outc(x) #dim = 256, n_channel = 3
 
@@ -118,8 +120,7 @@ class GDiff(pl.LightningModule):
         """
         Corresponds to Algorithm 1 from (Ho et al., 2020), but with colored noise.
         """
-        #alpha should be a tensor of the size of the batch_size, we want a alpha different for each batch
-        
+        #phi should be a tensor of the size of the batch_size, we want a phi different for each batch element
         #if batch is a list (the case of ImageFolder for ImageNet): take the first element, otherwise take batch:
         if isinstance(batch, list):
             batch = batch[0]
@@ -129,7 +130,7 @@ class GDiff(pl.LightningModule):
             #sample phi_ps between -1 and 1
             phi_ps = torch.rand(bs, 1, device=self.device)*2 - 1
 
-        #if alpha is a scalar, cast to batch dimension. For training on a single alpha.
+        #if phi is a scalar, cast to batch dimension. For training on a single phi.
         if isinstance(phi_ps, float) or isinstance(phi_ps, int):
             phi_ps = phi_ps * torch.ones(bs,1).to(self.device) 
 
@@ -150,12 +151,12 @@ class GDiff(pl.LightningModule):
         """
         Corresponds to the inner loop of Algorithm 2 from (Ho et al., 2020).
         """
-        #alpha should be a tensor of the size of the batch_size, we want a different alpha for each batch element
+        #phi should be a tensor of the size of the batch_size, we want a different phi for each batch element
         if phi_ps is None:
             # If no phi_ps is given, assume it's white noise, i.e. phi_ps = 0
             phi_ps = torch.zeros(x.shape[0],1, device=self.device).float()
         
-        #if alpha is a scalar, cast to batch dimension
+        #if phi is a scalar, cast to batch dimension
         if isinstance(phi_ps, int) or isinstance(phi_ps, float):
             phi_ps = phi_ps * torch.ones(x.shape[0],1, device=self.device).float() 
         
@@ -180,7 +181,7 @@ class GDiff(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        loss = self.get_loss(batch, batch_idx) #check how to validate with the phi_ps
+        loss = self.get_loss(batch, batch_idx)
         self.log("val/loss", loss)
         return
 
@@ -296,7 +297,6 @@ class GDiff(pl.LightningModule):
             phi_all, x_all = self.blind_denoising(y, yt, norm_phi_mode=norm_phi_mode, num_chains_per_sample=num_chains_per_sample, n_it_gibbs=n_it_gibbs, n_it_burnin=n_it_burnin, return_chains=return_chains)
         else:
             x_all = self.blind_denoising(y, yt, norm_phi_mode=norm_phi_mode, num_chains_per_sample=num_chains_per_sample, n_it_gibbs=n_it_gibbs, n_it_burnin=n_it_burnin, return_chains=return_chains)
-        #x_denoised = x_all[:yt.shape[0], -1]  # We take the last samples of the first series of chains
         x_denoised_pmean = x_all[:, -avg_pmean:].reshape(num_chains_per_sample, -1, 10, self.img_depth, 256, 256).mean(dim=(0, 2))
         if return_chains:
             return phi_all, x_denoised_pmean
@@ -305,7 +305,10 @@ class GDiff(pl.LightningModule):
 
 
     def get_closest_timestep(self, noise_level, ret_sigma=False):
-        '''Returns the closest timestep to the given noise level. If ret_sigma is True, also returns the noise level corresponding to the closest timestep.'''
+        """
+        Returns the closest timestep to the given noise level. If ret_sigma is True, also returns the noise level corresponding to the closest timestep.
+        """
+        
 
         alpha_bar_t = self.alpha_bar_t.to(noise_level.device)
         all_noise_levels = torch.sqrt((1-alpha_bar_t)/alpha_bar_t).reshape(-1, 1).repeat(1, noise_level.shape[0])
@@ -339,7 +342,7 @@ def load_model(diffusion_steps=10000,
                in_size_image=256*256,
                n_channels=3,
                root_dir=None,
-               device='gpu'):
+               device='cuda'):
 
     if root_dir is None:
         root_dir = "model_checkpoints/"

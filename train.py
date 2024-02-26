@@ -1,6 +1,6 @@
 import torch
 import lightning as pl
-from gibbs_diffusion.model import GDiff, load_model
+from gibbs_diffusion.model import GDiff
 from gibbs_diffusion.model import load_model as load_gdiff_model
 from torch.utils.data import DataLoader
 from inference_utils.data import GDiff_dataset
@@ -81,15 +81,7 @@ def main(hparams):
 
     # Create model and trainer
     if load_model:
-        if dataset_choice == 'ImageNet':
-            model = load_gdiff_model(diffusion_steps=10000,
-                                in_size_image=256*256,
-                                n_channels=3,
-                                root_dir='model_checkpoints/',
-                                device='gpu')
-        else:
-            print("model was only pretrained on Imagenet, no pretrained model to load on your dataset")
-            raise NotImplementedError
+        model = load_gdiff_model(diffusion_steps=10000)
     else:
         model = GDiff(in_size = in_size_image, 
                                diffusion_steps = diffusion_steps, 

@@ -1,7 +1,7 @@
 import torch
-from torch import fft
-from tqdm import tqdm
-import torch.nn.functional as F
+# from torch import fft
+# from tqdm import tqdm
+# import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -44,101 +44,6 @@ def get_colored_noise_2d(shape, phi = 0, ret_psd=False, device = None):
     else:
         return noises
     
-
-def plot_ps(bins, ps_list, labels=None, show=False, save_name=None):
-    bins_centers = (bins[:-1] + bins[1:])/2
-
-    fig, ax = plt.subplots(1, 1)
-    for idx, ps in enumerate(ps_list):
-        ax.plot(bins_centers, ps[:-1], label=labels[idx] if labels is not None else None)
-    if labels is not None:
-        ax.legend()
-    ax.set_xscale('log')
-    ax.set_yscale('log')
-    if save_name is not None:
-        fig.savefig(save_name, facecolor='white', transparent=False)
-    if show:
-        fig.show(warn=False)
-    else:
-        plt.close(fig)
-
-
-def plot_maps(d, s, u_final, show=False, save_name=None):
-    fig, axs = plt.subplots(1, 3, figsize=(12, 3.5))
-
-    if d.ndim == 2: # Grayscale data
-        vmin = s.mean() - 3*s.std()
-        vmax = s.mean() + 3*s.std()
-        cmap = 'magma'
-    else: # RGB data (assumed well normalized)
-        vmin = None
-        vmax = None
-        cmap = None
-
-    axs[0].imshow(d, vmin=vmin, vmax=vmax, cmap=cmap, interpolation='none')
-    axs[1].imshow(s, vmin=vmin, vmax=vmax, cmap=cmap, interpolation='none')
-    axs[2].imshow(u_final, vmin=vmin, vmax=vmax, cmap=cmap, interpolation='none')
-    axs[0].set_title("d")
-    axs[1].set_title("s")
-    axs[2].set_title("u_final")
-
-    if save_name is not None:
-        fig.savefig(save_name, interpolation='none', facecolor='white', transparent=False)
-    if show:
-        fig.show(warn=False)
-    else:
-        plt.close(fig)
-
-
-def m_count(N, bins=None):
-    """
-        Count the number of modes per isotropic bin.
-    """
-    ndim = 2
-    
-    # Build an array of isotropic wavenumbers making use of numpy broadcasting
-    wn = (2 * np.pi * np.fft.fftfreq(N)).reshape((N,) + (1,) * (ndim - 1))
-    wn_iso = np.zeros((N, N))
-    for i in range(ndim):
-        wn_iso += np.moveaxis(wn, 0, i) ** 2
-    wn_iso = np.sqrt(wn_iso)
-            
-    # We do not need ND-arrays anymore
-    wn_iso = wn_iso.ravel()
-    
-    # We compute associations between index and bins
-    if bins is None:
-        bins = np.sort(np.unique(wn_iso)) # Default binning
-    index = np.digitize(wn_iso, bins) - 1
-        
-    # Stacking
-    stacks = np.zeros(len(bins))
-    for i in range(len(index)):
-        if index[i] >= 0:
-            stacks[index[i]] += 1
-            
-    return stacks[:-1]
-
-
-def compute_autocovariance(data):
-    """
-    Compute the autocovariance matrix of the input data.
-    
-    Works for any dimension.
-
-    Parameters
-    ----------
-    data : array
-        Input data.
-
-    Returns
-    -------
-    array
-        Autocovariance matrix.
-
-    """
-    return np.real(np.fft.ifftn(np.absolute(np.fft.fftn(data - data.mean())) ** 2) / np.prod(data.shape))
-
 
 def _spectral_iso(data_sp, bins=None, sampling=1.0, return_counts=False):
     """

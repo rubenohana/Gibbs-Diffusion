@@ -73,8 +73,10 @@ class GDiff_dataset(torch.utils.data.Dataset):
 
 
 def get_noise_level_estimate(y, sigma_min, sigma_max):
-    """ Estimate the noise level of the image y. Image y is assumed to take values in [0, 1].
-    Heuristic is calibrated for ImageNet and alpha in [-1, 1]. See calibration_notebooks/heuristic_sigma_estimation.ipynb. """
+    """ 
+    Estimate the noise level of the image y. Image y is assumed to take values in [0, 1].
+    Heuristic is calibrated for ImageNet and alpha in [-1, 1].
+    Please send me an email if you want the notebook for calibration."""
     assert y.ndim == 4 or y.ndim == 3 # (N, C, H, W) or (C, H, W)
     y_std = torch.std(y, dim=(-1, -2, -3))
     sigma_est = y_std*1.15 - 0.17 # Heuristic from heuristic_sigma_estimation.ipynb for Imagenet

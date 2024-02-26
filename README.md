@@ -7,3 +7,4 @@ Add Imagenet information
 Add notebook example denoising
 Add training instructions (WANDB)
 Add denoise.py example
+Add DnCNN model path to their repository

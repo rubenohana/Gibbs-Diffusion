@@ -24,13 +24,13 @@ class DualAveragingStepSize():
             nadapt (int, optional): _description_. Defaults to 0.
         """
         self.initial_step_size = initial_step_size 
-        self.mu = torch.log(initial_step_size) #torch.log(10 * initial_step_size)  # proposals are biased upwards to stay away from 0.
+        self.mu = torch.log(initial_step_size) # proposals are biased upwards to stay away from 0.
         self.target_accept = target_accept
         self.gamma = gamma * 2 #parameter to tune
         self.t = t0
         self.kappa = kappa
-        self.error_sum = torch.zeros_like(self.initial_step_size).to(initial_step_size.device) #0
-        self.log_averaged_step = torch.zeros_like(self.initial_step_size).to(initial_step_size.device) #0
+        self.error_sum = torch.zeros_like(self.initial_step_size).to(initial_step_size.device)
+        self.log_averaged_step = torch.zeros_like(self.initial_step_size).to(initial_step_size.device)
         self.nadapt = nadapt
         
     def update(self, p_accept):
