@@ -3,12 +3,12 @@ import torch.nn as nn
 import lightning as pl
 import math
 import os, glob
-from modules import *
-#from momo import MomoAdam
-from utils import get_colored_noise_2d
-from inference_utils.colored_ps import ColoredPS
-import inference_utils.utils as iut
-from data import get_noise_level_estimate
+from .modules import *
+from inference_utils.utils import get_colored_noise_2d
+import inference_utils.utils_hmc as iut
+import sys
+sys.path.append('../')
+from inference_utils.data import get_noise_level_estimate
 from tqdm import tqdm
 from inference_utils.hmc import HMC
 
@@ -199,7 +199,7 @@ class GDiff(pl.LightningModule):
         '''Gibbs-Diffusion: performs blind denoising with a Gibbs sampler alternating between the diffusion model step returning a sample from p(x|y,phi) and the HMC step that return estimates of parameters from p(phi|x,y).'''
 
         num_samples = y.shape[0]
-        ps_model = ColoredPS(norm_input_phi=norm_phi_mode)
+        ps_model = iut.ColoredPS(norm_input_phi=norm_phi_mode)
         
         # Prior, likelihood, and posterior functions
         sample_phi_prior = lambda n: iut.sample_prior_phi(n, norm=norm_phi_mode, device=self.device) # Sample uniformly in [-1, 1]

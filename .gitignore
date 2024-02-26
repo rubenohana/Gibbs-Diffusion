@@ -5,3 +5,4 @@ __pycache__/
 output_slurm/
 wandb/
 lightning_logs/
+.hypothesis/

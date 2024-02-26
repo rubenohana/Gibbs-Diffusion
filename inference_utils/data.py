@@ -24,7 +24,7 @@ def ImageNet_val_dataset(path= "/tmp/imagenet/val/", transform = True):
     val_dataset = ImageFolder(path, transform=transform)
     return val_dataset
 
-def CBSD68_dataset(path = "data/CBSD68/"):
+def CBSD68_dataset(path = "./data/CBSD68/"):
     '''Returns images normalized in [0,1]'''
     transform = transforms.Compose([transforms.Resize(256),
                                     transforms.CenterCrop(256),
@@ -32,7 +32,7 @@ def CBSD68_dataset(path = "data/CBSD68/"):
     dataset = ImageFolder(path, transform=transform)
     return dataset
 
-def McMaster_dataset(path = "data/McMaster/"):
+def McMaster_dataset(path = "./data/McMaster/"):
     '''Returns images normalized in [0,1]'''
     transform = transforms.Compose([transforms.Resize(256),
                                     transforms.CenterCrop(256),
@@ -40,7 +40,7 @@ def McMaster_dataset(path = "data/McMaster/"):
     dataset = ImageFolder(path, transform=transform)
     return dataset
 
-def Kodak24_dataset(path = "data/Kodak24/"):
+def Kodak24_dataset(path = "./data/Kodak24/"):
     '''Returns images normalized in [0,1]'''
     transform = transforms.Compose([transforms.Resize(256),
                                     transforms.CenterCrop(256),

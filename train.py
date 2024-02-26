@@ -1,8 +1,9 @@
 import torch
 import lightning as pl
-from model import GDiff, load_model
+from gibbs_diffusion.model import GDiff, load_model
+from gibbs_diffusion.model import load_model as load_gdiff_model
 from torch.utils.data import DataLoader
-from data import GDiff_dataset
+from inference_utils.data import GDiff_dataset
 import glob
 from lightning.pytorch.loggers import WandbLogger
 from lightning.pytorch.callbacks import ModelCheckpoint
@@ -81,7 +82,7 @@ def main(hparams):
     # Create model and trainer
     if load_model:
         if dataset_choice == 'ImageNet':
-            model = load_model(diffusion_steps=10000,
+            model = load_gdiff_model(diffusion_steps=10000,
                                 in_size_image=256*256,
                                 n_channels=3,
                                 root_dir='model_checkpoints/',
