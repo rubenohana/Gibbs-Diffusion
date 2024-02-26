@@ -1,5 +1,3 @@
-### implement PSNR and SSIM metrics on 3 channel images
-
 import torch
 import torch.nn.functional as F
 import numpy as np
@@ -7,7 +5,7 @@ import numpy as np
 import skimage.metrics as skmetrics
 from torchmetrics.image import StructuralSimilarityIndexMeasure
 from torchmetrics.image.fid import FrechetInceptionDistance
-from inference_utils.utils import power_spectrum_iso
+from gdiff_utils.utils import power_spectrum_iso
 
 def psnr(img1, img2, data_range=1.0):
     '''img1: clean image
@@ -53,7 +51,7 @@ def psnr_uint8(img1, img2):
         img2 = img2.unsqueeze(0)
     mse = F.mse_loss(img1, img2, reduction='none').mean(dim=(-1,-2,-3))
     
-    return 10 * torch.log10((255.0)**2 / mse) # = 10 * torch.log10(1/mse) and 1 is the max value of the image since they are normalized inside
+    return 10 * torch.log10((255.0)**2 / mse) 
 
 def ssim(img1, img2):
     '''img1: clean image

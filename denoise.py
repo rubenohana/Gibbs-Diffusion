@@ -1,31 +1,16 @@
 import os, sys
 import numpy as np
 import torch
-import matplotlib.pyplot as plt
 import bm3d
 import pickle
-from tqdm import tqdm
 from torch.utils.data import DataLoader, RandomSampler
-
-sys.path.append(os.path.abspath('../'))
-from inference_utils.data import GDiff_dataset
+from gdiff_utils.data import GDiff_dataset
 from gibbs_diffusion.model import load_model
+from gdiff_utils.utils import get_colored_noise_2d
 
-import inference_utils.utils_hmc as iut
-from inference_utils.utils import get_colored_noise_2d
-
-# from gibbs_diffusion.model import load_model, get_closest_timestep, denoise_samples_batch_time
-# from inference_utils.utils import get_colored_noise_2d, plot_power_spectrum, plot_list_of_images
 from metrics.utils import integrated_error_PS, FID_score, psnr_skimage, ssim_skimage
-# from data import CBSD68_dataset, Kodak24_dataset, McMaster_dataset, ImageNet_val_dataset, get_noise_level_estimate
 
-# import inference_utils.utils as iut
-# from inference_utils.hmc import HMC
-# from inference_utils.utils import ColoredPS
-
-# kair_dir = '/mnt/home/bregaldosaintblancard/Projects/Diffusion4Dust/KAIR/'
-# sys.path.append(kair_dir)
-from dncnn.network_dncnn import DnCNN as net
+from gdiff_utils.network_dncnn import DnCNN as net
 
 device = 0
 save_images = True

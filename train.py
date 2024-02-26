@@ -3,7 +3,7 @@ import lightning as pl
 from gibbs_diffusion.model import GDiff
 from gibbs_diffusion.model import load_model as load_gdiff_model
 from torch.utils.data import DataLoader
-from inference_utils.data import GDiff_dataset
+from gdiff_utils.data import GDiff_dataset
 import glob
 from lightning.pytorch.loggers import WandbLogger
 from lightning.pytorch.callbacks import ModelCheckpoint

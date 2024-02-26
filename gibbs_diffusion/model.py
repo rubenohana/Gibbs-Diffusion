@@ -4,13 +4,13 @@ import lightning as pl
 import math
 import os, glob
 from .modules import DoubleConv, Down, Up, OutConv, phi_embedding, SAWrapper
-from inference_utils.utils import get_colored_noise_2d
-import inference_utils.utils_hmc as iut
+from gdiff_utils.utils import get_colored_noise_2d
+import gdiff_utils.utils_hmc as iut
 import sys
 sys.path.append('../')
-from inference_utils.data import get_noise_level_estimate
+from gdiff_utils.data import get_noise_level_estimate
 from tqdm import tqdm
-from inference_utils.hmc import HMC
+from gdiff_utils.hmc import HMC
 
 
 class GDiff(pl.LightningModule):
