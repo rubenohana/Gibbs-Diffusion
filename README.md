@@ -7,7 +7,7 @@ Center for Computational Mathematics, Flatiron Institute, New York City, USA
 Link to the paper: ARXIV
 
 
-#### TL;DR: we propose a blind denoiser that also infer the parameters of the noise. The method is a Gibbs Sampler based on sampling from a pre-trained Diffusion model and an HMC step.
+#### TL;DR: we propose a image blind denoiser that also infers the parameters of the noise. The method is a Gibbs Sampler based on sampling from a pre-trained Diffusion model and an HMC step.
 
 <p align="center">
 <img width="1200px"  src="denoising_example.png">
