@@ -1,30 +1,52 @@
-# Gibbs-Diffusion
-Code of the paper "Listening to the Noise: Blind Denoising with Gibbs-Diffusion"
+## Training and testing code for Gibbs-Diffusion
+*Listening to the Noise: Blind Denoising with Gibbs-Diffusion*, David Heurtel-Depeiges, Charles Margossian, Ruben Ohana, Bruno Régaldo-Saint Blancard
+Link to the paper: ARXIV
 
+[Center for Computational Mathematics](https://www.simonsfoundation.org/flatiron/center-for-computational-mathematics/), Flatiron Institute, New York City, USA
 
-Add how to download the dataset
-Add Imagenet information
-Add notebook example denoising
-Add training instructions (WANDB)
-Add denoise.py example
-Add DnCNN model path to their repository
+#### TL;DR: we propose a blind denoiser that can also infer the parameters of the noise. The method is a Gibbs Sampler based on sampling from a pre-trained Diffusion model and an HMC step
 
-# Add the title of the paper
-# Add the authors
-# Add the abstract
-# Add the link to the paper
-# Add the link to the repository
-# Add the link to the dataset
-# Add the link to the pretrained model
-# Add the link to the notebook example
-# Add the link to the training instructions
-# Add the link to the denoise.py example
-# Add the link to the DnCNN model path
-# Add the link to the Imagenet information
-# Add the link to the notebook example denoising
-# Add the link to the training instructions (WANDB)
-# Add the link to the denoise.py example
-# Add the link to the DnCNN model path to their repository
-# Add the link to the Imagenet information
-# Add the link to the notebook example denoising
-# Add contact email
+## Installation
+
+Prerequisites:
+
+-  Python >= 3.9.15
+-  Pytorch >= 1.13 (we recommend to use a >2.0 version)
+-  Pytorch-Lightning >= 2.1.0
+-  Cuda >= 11.6 (we recommend to use a >12.0 version)
+-  bm3d >=4.0.1 (for benchmarking against BM3D, not used in Gibbs-Diffusion)
+
+[Google Drive to download the weights of the model](https://drive.google.com/drive/folders/1E31OXJ9zZM3JzK9bsXsQFzFL16CPPCfN?usp=sharing) -- (create a folder ```model_checkpoints``` and download the two google drive folders in it). The weights will be added to HuggingFace soon.
+
+## Usage
+
+### Training
+To train the model, first you should download ImageNet and adjust the paths in ```gdiff_utils.data.py``` for the ImageNet_train_dataset and ImageNet_val_dataset. You can train the model on your own dataset, just add it into ```gdiff_utils.data.py```
+
+**WANDB**: if you want to use Weight and Biases to follow the training, modify `wandb_logger` in `train.py`. If you don't want to use WANDB, set '--wandb=False' when launching the training.
+You can train on a **single GPU** using the following command:
+```python
+python train.py
+```
+
+To train on **multiple-GPUs** using DDP with Lightning, you can use (exampale given for an 8 GPUs node):
+```python
+torchrun --standalone --nproc_per_node=8 train.py --n_devices 8
+```
+
+Here are the details about some key arguments for training:
+- `--diffusion_steps`: The number of diffusion steps of the diffusion model. The more the better, but the longer the inference.
+- `--dataset_choice`: By default it is ImageNet (that you should download), but you can use directly `cbsd68`, `mcmaster` or `kodak24` that we provide in this repository.
+- `--wandb`: Set to True to use weight and biases.
+- `enable_ckpt`: enables saving the checkpoint of the model after `--max_epochs`.
+- `load_model`: load a pre-trained model. If set to `True`, then you are doing finetuning.
+
+Training our models on 100 epochs of ImageNet took about 40 hours on a single node of 8 H100-80GB.
+
+### Blind denoising
+Once you have either downloaded the pre-trained models on ImageNet, or trained your own model, you can either denoise a single image in the notebook `blind_denoising_example.ipynb`, or launch the following script to denoise on whole dataset of your choice:
+```python
+denoise.py
+```
+Note: to compare with DnCNN or other models, you should download the weights [here](https://github.com/cszn/KAIR/tree/master/model_zoo).
+
