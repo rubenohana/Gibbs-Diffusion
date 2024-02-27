@@ -21,7 +21,7 @@ Prerequisites:
 -  Cuda >= 11.6 (we recommend to use a >12.0 version)
 -  bm3d >=4.0.1 (for benchmarking against BM3D, not used in Gibbs-Diffusion)
 
-[Google Drive to download the weights of the model](https://drive.google.com/drive/folders/1E31OXJ9zZM3JzK9bsXsQFzFL16CPPCfN?usp=sharing) -- (create a folder ```model_checkpoints``` and download the two google drive folders in it). The weights will be added to HuggingFace soon.
+We provide two models pre-trained on ImageNet training set. The first one is trained on 5000 diffusion steps, while the second one, slower but better, is trained on 10,000 diffusion steps. They are available on this [Google Drive](https://drive.google.com/drive/folders/1E31OXJ9zZM3JzK9bsXsQFzFL16CPPCfN?usp=sharing) -- (create a folder ```model_checkpoints``` and download the two google drive folders in it). Weights should be added to HuggingFace soon.
 
 ## Usage
 
