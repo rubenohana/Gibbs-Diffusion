@@ -21,7 +21,6 @@ def main(hparams):
     lr = hparams.learning_rate
     weight_decay = hparams.weight_decay
     accelerator = hparams.accelerator
-    alpha_ps = hparams.alpha_ps #if None, the model will be trained on many different colored noises
     wandb_group_name = hparams.wandb_group_name
     enable_ckpt = hparams.enable_ckpt
 
@@ -34,15 +33,12 @@ def main(hparams):
         n_devices = n_devices,
         optimizer = optimizer,
         lr = lr,
-        weight_decay = weight_decay,
-        alpha_ps = alpha_ps
+        weight_decay = weight_decay
     )
 
     # Loading parameters
     load_model = hparams.load_model
 
-    # Code for optionally loading model
-    last_checkpoint = hparams.last_checkpoint
 
     #Use wandb or not
     wandb = hparams.wandb
@@ -56,9 +52,6 @@ def main(hparams):
     
     #default_root_dir=f"./ckpt_hyperparam_tuning/{dataset_choice}/{diffusion_steps}_steps_{optimizer}_{lr}_lr/lightning_logs/version_{pass_version}/checkpoints/"
         
-    #Here default directory is ckpt_hyperparam_tuning
-    if load_model:
-        last_checkpoint = glob.glob(default_root_dir + "*.ckpt")[-1]
     
     # Create datasets and data loaders
     if dataset_choice == 'ImageNet':
@@ -118,7 +111,6 @@ if __name__ == "__main__":
     parser.add_argument("--optimizer", default="AdamW", type=str)
     parser.add_argument("--learning_rate", default=1e-2, type=float)
     parser.add_argument("--weight_decay", default=0, type=float)
-    parser.add_argument("--alpha_ps", default=0, type=float or torch.Tensor)
     parser.add_argument("--max_epoch", default=10, type=int)
     parser.add_argument("--batch_size", default=128, type=int)
     #Logging Wandb
@@ -127,7 +119,6 @@ if __name__ == "__main__":
     #Model checkpointing
     parser.add_argument("--enable_ckpt", default=True, type = bool)
     parser.add_argument("--load_model", default=False, type = bool)
-    parser.add_argument("--last_checkpoint", default=None, type=str)
 
     args = parser.parse_args()
     main(args)
