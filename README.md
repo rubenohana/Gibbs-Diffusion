@@ -7,6 +7,10 @@ Link to the paper: ARXIV
 
 #### TL;DR: we propose a blind denoiser that also infer the parameters of the noise. The method is a Gibbs Sampler based on sampling from a pre-trained Diffusion model and an HMC step.
 
+<p align="center">
+<img width="1200px"  src="denoising_example.png">
+</p>
+
 ## Installation
 
 Prerequisites:
