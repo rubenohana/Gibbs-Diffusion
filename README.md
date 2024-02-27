@@ -1,9 +1,11 @@
-## Training and testing code for Gibbs-Diffusion
+## Training and testing code for Gibbs-Diffusion (GDiff)
 *Listening to the Noise: Blind Denoising with Gibbs-Diffusion*, [David Heurtel-Depeiges](https://david-heurtel-depeiges.github.io/), [Charles Margossian](https://charlesm93.github.io/), [Ruben Ohana](https://rubenohana.github.io/), [Bruno Régaldo-Saint Blancard](https://users.flatironinstitute.org/~bregaldosaintblancard/)
+
+Center for Computational Mathematics, Flatiron Institute, New York City, USA
+
 
 Link to the paper: ARXIV
 
-[Center for Computational Mathematics](https://www.simonsfoundation.org/flatiron/center-for-computational-mathematics/), Flatiron Institute, New York City, USA
 
 #### TL;DR: we propose a blind denoiser that also infer the parameters of the noise. The method is a Gibbs Sampler based on sampling from a pre-trained Diffusion model and an HMC step.
 
