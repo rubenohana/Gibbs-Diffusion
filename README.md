@@ -1,10 +1,11 @@
 ## Training and testing code for Gibbs-Diffusion
-*Listening to the Noise: Blind Denoising with Gibbs-Diffusion*, David Heurtel-Depeiges, Charles Margossian, Ruben Ohana, Bruno Régaldo-Saint Blancard
+*Listening to the Noise: Blind Denoising with Gibbs-Diffusion*, [David Heurtel-Depeiges](https://david-heurtel-depeiges.github.io/), [Charles Margossian](https://charlesm93.github.io/), [Ruben Ohana](https://rubenohana.github.io/), [Bruno Régaldo-Saint Blancard](https://users.flatironinstitute.org/~bregaldosaintblancard/)
+
 Link to the paper: ARXIV
 
 [Center for Computational Mathematics](https://www.simonsfoundation.org/flatiron/center-for-computational-mathematics/), Flatiron Institute, New York City, USA
 
-#### TL;DR: we propose a blind denoiser that can also infer the parameters of the noise. The method is a Gibbs Sampler based on sampling from a pre-trained Diffusion model and an HMC step
+#### TL;DR: we propose a blind denoiser that also infer the parameters of the noise. The method is a Gibbs Sampler based on sampling from a pre-trained Diffusion model and an HMC step.
 
 ## Installation
 
@@ -46,7 +47,17 @@ Training our models on 100 epochs of ImageNet took about 40 hours on a single no
 ### Blind denoising
 Once you have either downloaded the pre-trained models on ImageNet, or trained your own model, you can either denoise a single image in the notebook `blind_denoising_example.ipynb`, or launch the following script to denoise on whole dataset of your choice:
 ```python
-denoise.py
+python denoise.py
 ```
 Note: to compare with DnCNN or other models, you should download the weights [here](https://github.com/cszn/KAIR/tree/master/model_zoo).
+
+
+## Contributing
+If you enconter problems using Gibbs-Diffusion or have a feature request, feel free to create an issue!
+
+## Citation
+```
+Add citation once the paper is released.
+```
+
 
