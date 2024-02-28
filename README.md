@@ -6,7 +6,7 @@ Center for Computational Mathematics, Flatiron Institute, New York City, USA
 
 Link to the paper: ARXIV
 
-<img src="denoising_effect1.gif" width="260px"/> <img src="denoising_effect3.gif" width="260px"/> <img src="denoising_effect2.gif" width="260px"/>
+<img src="denoising_effect1.gif" width="270px"/> <img src="denoising_effect3.gif" width="270px"/> <img src="denoising_effect2.gif" width="270px"/>
 
 **[Blind denoising using GDiff** for a noise level of $\sigma = 0.2$ and different colors of noise, i.e. $\varphi$ ={-0.4, 0, 0.4} for CBSD68 and Kodak24.] 
 
