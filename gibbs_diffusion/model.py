@@ -14,18 +14,51 @@ from gdiff_utils.hmc import HMC
 
 
 class GDiff(pl.LightningModule):
+    """
+    GDiff is a class representing the Gibbs-Diffusion model for blind image denoising.
+    It is a U-Net with added positional encodings, embedding of phi, and self-attention layers.
+    The model performs blind denoising by alternating between the diffusion model step and the HMC step.
+    \phi in this code is equivalent to \varphi in the paper.
+
+    Args:
+        in_size (int): Input size of the image.
+        diffusion_steps (int): Number of diffusion steps.
+        img_depth (int, optional): Number of image channels. Defaults to 3.
+        lr (float, optional): Learning rate for optimization. Defaults to 2e-4.
+        weight_decay (float, optional): Weight decay for optimization. Defaults to 0.
+
+    Attributes:
+        diffustion_steps (int): Number of diffusion steps.
+        beta_small (float): Small value of beta for diffusion.
+        beta_large (float): Large value of beta for diffusion.
+        timesteps (torch.Tensor): Timesteps for diffusion.
+        beta_t (torch.Tensor): Beta values for each timestep.
+        alpha_t (torch.Tensor): Alpha values for each timestep.
+        alpha_bar_t (torch.Tensor): Cumulative product of alpha values.
+
+    Methods:
+        pos_encoding: Computes positional encoding of time.
+        forward: Performs forward pass of the model.
+        get_loss: Computes the loss for training.
+        denoise_1step: Performs denoising for one diffusion step.
+        training_step: Training step for the LightningModule.
+        validation_step: Validation step for the LightningModule.
+        configure_optimizers: Configures the optimizer for training.
+        blind_denoising: Performs blind denoising with Gibbs sampling.
+        blind_denoising_pmean: Performs blind denoising with the posterior mean estimator.
+        get_closest_timestep: Returns the closest timestep t to the given noise level \sigma.
+        denoise_samples_batch_time: Denoises a batch of images for a given number of timesteps (time can be different for the elements of the batch).
+    """
+    
     def __init__(self,
                  in_size, 
                  diffusion_steps, 
                  img_depth = 3, 
                  lr = 2e-4,
                  weight_decay = 0):
-        """
-        Gibbs-Diffusion model. 
-        The LightningModule allows for Data Parallel training easily. 
-        Training is done on Imagenet for 100 epochs, and takes about 40 hours a single node of 8 H100s GPUs. 
-        See train.py for details.
-        """
+        
+        
+       
 
         super().__init__()
         self.diffusion_steps = diffusion_steps
@@ -89,7 +122,7 @@ class GDiff(pl.LightningModule):
 
     def forward(self, x, t, phi_ps=None):
         """
-        The model is a U-Net with added positional encodings, embedding of \varphi  and self-attention layers. The total number of parameters is ~70M.
+        The model is a U-Net with added positional encodings for time, embedding of phi  and self-attention layers. The total number of parameters is ~70M.
         """
         if phi_ps is None:
             phi_ps = torch.zeros(x.shape[0],1).to(self.device).float()
@@ -149,7 +182,7 @@ class GDiff(pl.LightningModule):
 
     def denoise_1step(self, x, t, phi_ps = None):
         """
-        Corresponds to the inner loop of Algorithm 2 from (Ho et al., 2020).
+        Denoises one step given an phi (if phi_ps=None, it is sampled uniformly in [-1,1]) and a timestep t.
         """
         #phi should be a tensor of the size of the batch_size, we want a different phi for each batch element
         if phi_ps is None:
@@ -343,10 +376,25 @@ def load_model(diffusion_steps=10000,
                n_channels=3,
                root_dir=None,
                device='cuda'):
+    """
+    Loads a Gibbs Diffusion model from a checkpoint file.
 
+    Args:
+        diffusion_steps (int): Number of diffusion steps.
+        in_size_image (int): Size of the input image.
+        n_channels (int): Number of image channels.
+        root_dir (str): Root directory where the checkpoint file is located. If None, the default directory "model_checkpoints/" is used.
+        device (str): Device to load the model on. Default is 'cuda'.
+
+    Returns:
+        model: The loaded Gibbs Diffusion model.
+    """
+    
     if root_dir is None:
         root_dir = "model_checkpoints/"
-    model_dir = os.path.join(root_dir, f"GDiff_{diffusion_steps}steps/")
+        model_dir = os.path.join(root_dir, f"GDiff_{diffusion_steps}steps/")
+    else:
+        model_dir = root_dir
     ckpt_dir = glob.glob(model_dir + "*.ckpt")[-1]
     model = GDiff.load_from_checkpoint(ckpt_dir, 
                                         in_size=in_size_image, 
