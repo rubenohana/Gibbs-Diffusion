@@ -1,5 +1,5 @@
-## Training and testing code for Gibbs-Diffusion (GDiff)
-*Listening to the Noise: Blind Denoising with Gibbs-Diffusion*, [David Heurtel-Depeiges](https://david-heurtel-depeiges.github.io/), [Charles Margossian](https://charlesm93.github.io/), [Ruben Ohana](https://rubenohana.github.io/), [Bruno Régaldo-Saint Blancard](https://users.flatironinstitute.org/~bregaldosaintblancard/)
+## Training and testing code for Gibbs Diffusion (GDiff)
+*Listening to the Noise: Blind Denoising with Gibbs Diffusion*, [David Heurtel-Depeiges](https://david-heurtel-depeiges.github.io/), [Charles Margossian](https://charlesm93.github.io/), [Ruben Ohana](https://rubenohana.github.io/), [Bruno Régaldo-Saint Blancard](https://users.flatironinstitute.org/~bregaldosaintblancard/)
 
 Center for Computational Mathematics, Flatiron Institute, New York City, USA
 
@@ -28,7 +28,7 @@ Prerequisites:
 -  Cuda >= 11.6 (we recommend to use a >12.0 version)
 -  bm3d >=4.0.1 (for benchmarking against BM3D, not used in Gibbs-Diffusion)
 
-We provide two models pre-trained on ImageNet training set. The first one is trained on 5000 diffusion steps, while the second one, slower but better, is trained on 10,000 diffusion steps. They are available on this [Google Drive](https://drive.google.com/drive/folders/1E31OXJ9zZM3JzK9bsXsQFzFL16CPPCfN?usp=sharing) (create a folder ```model_checkpoints``` and download the two google drive folders in it). Weights should be added to HuggingFace soon.
+We provide two models pre-trained on ImageNet training set. The first one is trained with 5,000 diffusion steps, while the second one, slower but better, is trained with 10,000 diffusion steps. They are available on this [Google Drive](https://drive.google.com/drive/folders/1E31OXJ9zZM3JzK9bsXsQFzFL16CPPCfN?usp=sharing) (create a folder ```model_checkpoints``` and download the two google drive folders in it). Weights should be added to HuggingFace soon.
 
 ## Usage
 
@@ -41,7 +41,7 @@ You can train on a **single GPU** using the following command:
 python train.py
 ```
 
-To train on **multiple-GPUs** using DDP with Lightning, you can use (exampale given for an 8 GPUs node):
+To train on **multiple-GPUs** using DDP with Lightning, you can use (e.g., for a node with 8 GPUs):
 ```python
 torchrun --standalone --nproc_per_node=8 train.py --n_devices 8
 ```
@@ -64,7 +64,7 @@ Note: to compare with DnCNN or other models, you should download the weights [he
 
 
 ## Contributing
-If you enconter problems using Gibbs-Diffusion or have a feature request, feel free to create an issue!
+If you encounter problems using GDiff or have a feature request, feel free to create an issue!
 
 ## Citation
 ```
