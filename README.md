@@ -6,12 +6,17 @@ Center for Computational Mathematics, Flatiron Institute, New York City, USA
 
 Link to the paper: ARXIV
 
+<img src="denoising_effect1.gif" width="333px"/> <img src="denoising_effect3.gif" width="333px"/> <img src="denoising_effect2.gif" width="333px"/>
+
+**[Blind denoising using GDiff** for a noise level of $\sigma = 0.2$ and different colors of noise, i.e. $\varphi$ ={-0.4, 0, 0.4} for CBSD68 and Kodak24.] 
 
 #### TL;DR: we propose a image blind denoiser that also infers the parameters of the noise. The method is a Gibbs Sampler based on sampling from a pre-trained Diffusion model and an HMC step.
 
 <p align="center">
-<img width="1200px"  src="denoising_example.png">
+<img width="1000px"  src="denoising_example.png">
 </p>
+
+
 
 ## Installation
 
