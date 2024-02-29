@@ -1,0 +1,11 @@
+numpy
+matplotlib
+torch>=2.0
+torchvision
+pytorch-lightning>=2.1.0
+bm3d>=4.0.1
+arviz
+corner
+gdown
+scikit-image
+tqdm

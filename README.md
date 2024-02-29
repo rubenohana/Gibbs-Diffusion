@@ -6,29 +6,32 @@ Center for Computational Mathematics, Flatiron Institute, New York City, USA
 
 Link to the paper: ARXIV
 
-<img src="figs/denoising_effect1.gif" width="270px"/> <img src="figs/denoising_effect3.gif" width="270px"/> <img src="figs/denoising_effect2.gif" width="270px"/>
-
-**[Blind denoising using GDiff** for a noise level of $\sigma = 0.2$ and different colors of noise, i.e. $\varphi$ ={-0.4, 0, 0.4} for CBSD68 and Kodak24.] 
-
-#### TL;DR: we propose a image blind denoiser that also infers the parameters of the noise. The method is a Gibbs Sampler based on sampling from a pre-trained Diffusion model and an HMC step.
+#### TL;DR: We introduce GDiff, a blind denoising method addressing posterior sampling of both signal and noise parameters, with applications in natural image denoising and cosmology. GDiff relies on a Gibbs sampler that alternates sampling steps with a pretrained diffusion model and a Hamiltonian Monte Carlo sampler.
 
 <p align="center">
 <img width="1000px"  src="figs/denoising_example.png">
 </p>
 
+<img src="figs/denoising_effect1.gif" width="270px"/> <img src="figs/denoising_effect3.gif" width="270px"/> <img src="figs/denoising_effect2.gif" width="270px"/>
 
+**[Blind denoising using GDiff** for a noise level of $\sigma = 0.2$ and different colors of noise, i.e. $\varphi \in \{-0.4, 0, 0.4\}$ for CBSD68 and Kodak24.] 
 
 ## Installation
 
-Prerequisites:
+We recommend using an environment with Python >= 3.9.15 and PyTorch >= 2.0 (see [installation instructions](https://pytorch.org/)). GPU acceleration would require CUDA >= 11.6.
 
--  Python >= 3.9.15
--  Pytorch >= 1.13 (we recommend to use a >2.0 version)
--  Pytorch-Lightning >= 2.1.0
--  Cuda >= 11.6 (we recommend to use a >12.0 version)
--  bm3d >=4.0.1 (for benchmarking against BM3D, not used in Gibbs-Diffusion)
+In the relevant environment, run:
+```
+pip install -r requirements.txt
+```
 
-We provide two models pre-trained on ImageNet training set. The first one is trained with 5,000 diffusion steps, while the second one, slower but better, is trained with 10,000 diffusion steps. They are available on this [Google Drive](https://drive.google.com/drive/folders/1E31OXJ9zZM3JzK9bsXsQFzFL16CPPCfN?usp=sharing) (create a folder ```model_checkpoints``` and download the two google drive folders in it). Weights should be added to HuggingFace soon.
+To download the pretrained models, run:
+```
+gdown --folder --id 1E31OXJ9zZM3JzK9bsXsQFzFL16CPPCfN -O model_checkpoints
+```
+This will download two diffusion models pretrained on ImageNet using discrete timestepping. The first one is trained with 5,000 diffusion steps, while the second one, slower but more refined, is trained with 10,000 diffusion steps.
+
+You can alternatively download the models on this [Google Drive](https://drive.google.com/drive/folders/1E31OXJ9zZM3JzK9bsXsQFzFL16CPPCfN?usp=sharing). Make sure to put them in a folder called ```model_checkpoints```. We also plan to upload the weights on HuggingFace soon.
 
 ## Usage
 
