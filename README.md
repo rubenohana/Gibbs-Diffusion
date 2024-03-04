@@ -39,6 +39,7 @@ You can alternatively download the models on this [Google Drive](https://drive.g
 To train the model, first you should download ImageNet and adjust the paths in ```gdiff_utils.data.py``` for the ImageNet_train_dataset and ImageNet_val_dataset. You can train the model on your own dataset, just add it into ```gdiff_utils.data.py```
 
 **WANDB**: if you want to use Weight and Biases to follow the training, modify `wandb_logger` in `train.py`. If you don't want to use WANDB, set '--wandb=False' when launching the training.
+
 You can train on a **single GPU** using the following command:
 ```python
 python train.py
