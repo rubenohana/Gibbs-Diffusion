@@ -4,7 +4,7 @@
 Center for Computational Mathematics, Flatiron Institute, New York City, USA
 
 
-Link to the paper: ARXIV
+Link to the paper: [https://arxiv.org/pdf/2402.19455.pdf](https://arxiv.org/pdf/2402.19455.pdf)
 
 #### TL;DR: We introduce GDiff, a blind denoising method addressing posterior sampling of both signal and noise parameters, with applications in natural image denoising and cosmology. GDiff relies on a Gibbs sampler that alternates sampling steps with a pretrained diffusion model and a Hamiltonian Monte Carlo sampler.
 
@@ -71,7 +71,14 @@ If you encounter problems using GDiff or have a feature request, feel free to cr
 
 ## Citation
 ```
-Add citation once the paper is released.
+@misc{heurteldepeiges2024listening,
+      title={Listening to the Noise: Blind Denoising with Gibbs Diffusion}, 
+      author={David Heurtel-Depeiges and Charles C. Margossian and Ruben Ohana and Bruno Régaldo-Saint Blancard},
+      year={2024},
+      eprint={2402.19455},
+      archivePrefix={arXiv},
+      primaryClass={stat.ML}
+}
 ```
 
 
