@@ -72,14 +72,12 @@ If you encounter problems using GDiff or have a feature request, feel free to cr
 
 ## Citation
 ```
-@misc{heurteldepeiges2024listening,
+@article{heurteldepeiges2024listening,
       title={Listening to the Noise: Blind Denoising with Gibbs Diffusion}, 
-      author={David Heurtel-Depeiges and Charles C. Margossian and Ruben Ohana and Bruno Régaldo-Saint Blancard},
+      author={David Heurtel-Depeiges and Charles C. Margossian and Ruben Ohana and Bruno {Régaldo-Saint Blancard}},
       year={2024},
       eprint={2402.19455},
       archivePrefix={arXiv},
       primaryClass={stat.ML}
 }
 ```
-
-
