@@ -4,7 +4,7 @@ This repository implements GDiff for the blind denoising of natural images, as d
 
 by [David Heurtel-Depeiges](https://david-heurtel-depeiges.github.io/), [Charles Margossian](https://charlesm93.github.io/), [Ruben Ohana](https://rubenohana.github.io/), and [Bruno Régaldo-Saint Blancard](https://users.flatironinstitute.org/~bregaldosaintblancard/)
 
-Center for Computational Mathematics, Flatiron Institute, New York
+*Center for Computational Mathematics, Flatiron Institute, New York*
 
 --------------------
 
@@ -19,7 +19,8 @@ We showcase our method for the denoising of natural images in the case of colore
 <img width="1000px"  src="figs/denoising_example.png">
 </p>
 
-*The same prior remains relevant for the denoising of noisy BSD68 and Kodak24 images ($\sigma = 0.2$ and $\varphi \in \{-0.4, 0, 0.4\}$):*
+*The same prior remains relevant for the denoising of noisy BSD68 and Kodak24 images (*$\sigma = 0.2$ *and* $\varphi \in \{-0.4, 0, 0.4\}$*):*
+
 <img src="figs/denoising_effect1.gif" width="270px"/> <img src="figs/denoising_effect3.gif" width="270px"/> <img src="figs/denoising_effect2.gif" width="270px"/>
 
 ## Installation
