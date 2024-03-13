@@ -10,7 +10,7 @@ by [David Heurtel-Depeiges](https://david-heurtel-depeiges.github.io/), [Charles
 
 We introduce GDiff, a blind denoising method addressing posterior sampling of both signal and noise parameters, with applications in natural image denoising and cosmology. GDiff relies on a Gibbs sampler that alternates sampling steps with a pretrained diffusion model and a Hamiltonian Monte Carlo sampler.
 
-Concretely, given a noisy observation $y = x + \epsilon$, with $\epsilon \sim \mathcal{N}(0, \Sigma_\phi)$, GDiff enables the sampling of the posterior distribution $p(x, \phi \mid y)$ for arbitrary diffusion-based signal prior $p(x)$.
+Concretely, given a noisy observation $y = x + \varepsilon$, with $\varepsilon \sim \mathcal{N}(0, \Sigma_\phi)$, GDiff enables the sampling of the posterior distribution $p(x, \phi \mid y)$ for arbitrary diffusion-based signal prior $p(x)$.
 
 We showcase our method for the denoising of natural images in the case of colored noises with unknown amplitude $\sigma$ and spectral exponent $\varphi$.
 
