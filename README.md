@@ -2,7 +2,7 @@
 
 This repository implements GDiff for the blind denoising of natural images, as described in our paper [Listening to the Noise: Blind Denoising with Gibbs Diffusion](https://arxiv.org/abs/2402.19455)
 
-by [David Heurtel-Depeiges](https://david-heurtel-depeiges.github.io/), [Charles Margossian](https://charlesm93.github.io/), [Ruben Ohana](https://rubenohana.github.io/), and [Bruno Régaldo-Saint Blancard](https://users.flatironinstitute.org/~bregaldosaintblancard/)
+by [David Heurtel-Depeiges](https://david-heurtel-depeiges.github.io/), [Charles Margossian](https://charlesm93.github.io/), [Ruben Ohana](https://rubenohana.github.io/), and [Bruno Régaldo-Saint Blancard](https://bregaldo.github.io/)
 
 *Center for Computational Mathematics, Flatiron Institute, New York*
 
