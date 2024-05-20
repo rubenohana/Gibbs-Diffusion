@@ -25,7 +25,7 @@ We showcase our method for the denoising of natural images in the case of colore
 
 ## Installation
 
-We recommend using an environment with Python >= 3.9.15 and PyTorch >= 2.0 (see [installation instructions](https://pytorch.org/)). GPU acceleration would require CUDA >= 11.6.
+We recommend using an environment with Python >= 3.9 and PyTorch >= 2.0 (see [installation instructions](https://pytorch.org/)). GPU acceleration would require CUDA >= 11.6.
 
 In the relevant environment, run:
 ```

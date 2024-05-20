@@ -1,19 +1,10 @@
 import torch
+import os
 from torchvision.datasets import ImageFolder
 from torchvision import transforms
 
-def ImageNet_train_dataset(path= "/tmp/imagenet/train/", transform = True):
-    if transform:
-        transform = transforms.Compose([transforms.Resize(256),
-                                        transforms.CenterCrop(256),
-                                        transforms.RandomHorizontalFlip(),
-                                        transforms.ToTensor()])
-    else:
-        transform = transforms.Compose([transforms.ToTensor()])
-    train_dataset = ImageFolder(path, transform=transform)
-    return train_dataset
 
-def ImageNet_val_dataset(path= "/tmp/imagenet/val/", transform = True):
+def ImageNet_dataset(path="/tmp/imagenet/", split="train", transform=True):
     if transform:
         transform = transforms.Compose([transforms.Resize(256),
                                         transforms.CenterCrop(256),
@@ -21,8 +12,8 @@ def ImageNet_val_dataset(path= "/tmp/imagenet/val/", transform = True):
                                         transforms.ToTensor()])
     else:
         transform = transforms.Compose([transforms.ToTensor()])
-    val_dataset = ImageFolder(path, transform=transform)
-    return val_dataset
+    dataset = ImageFolder(os.path.join(path, split), transform=transform)
+    return dataset
 
 def CBSD68_dataset(path = "./data/CBSD68/"):
     '''Returns images normalized in [0,1]'''
@@ -52,9 +43,9 @@ class GDiff_dataset(torch.utils.data.Dataset):
     def __init__(self, dataset="cbsd68"):
         
         if dataset =="imagenet_train":
-            self.dataset = ImageNet_train_dataset()
+            self.dataset = ImageNet_dataset(split="train")
         elif dataset =="imagenet_val":
-            self.dataset = ImageNet_val_dataset()
+            self.dataset = ImageNet_dataset(split="val")
         elif dataset =="cbsd68":
             self.dataset = CBSD68_dataset()
         elif dataset =="mcmaster":
