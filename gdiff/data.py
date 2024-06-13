@@ -4,73 +4,67 @@ from torchvision.datasets import ImageFolder
 from torchvision import transforms
 
 
-def ImageNet_dataset(path="/tmp/imagenet/", split="train", transform=True):
-    if transform:
-        transform = transforms.Compose([transforms.Resize(256),
+class ImageDataset(torch.utils.data.Dataset):
+    def __init__(self, name="cbsd68", transform=True):
+        if transform:
+            trans = transforms.Compose([transforms.Resize(256),
                                         transforms.CenterCrop(256),
                                         transforms.RandomHorizontalFlip(),
                                         transforms.ToTensor()])
-    else:
-        transform = transforms.Compose([transforms.ToTensor()])
-    dataset = ImageFolder(os.path.join(path, split), transform=transform)
-    return dataset
-
-def CBSD68_dataset(path = "./data/CBSD68/"):
-    '''Returns images normalized in [0,1]'''
-    transform = transforms.Compose([transforms.Resize(256),
-                                    transforms.CenterCrop(256),
-                                    transforms.ToTensor()])
-    dataset = ImageFolder(path, transform=transform)
-    return dataset
-
-def McMaster_dataset(path = "./data/McMaster/"):
-    '''Returns images normalized in [0,1]'''
-    transform = transforms.Compose([transforms.Resize(256),
-                                    transforms.CenterCrop(256),
-                                    transforms.ToTensor()])
-    dataset = ImageFolder(path, transform=transform)
-    return dataset
-
-def Kodak24_dataset(path = "./data/Kodak24/"):
-    '''Returns images normalized in [0,1]'''
-    transform = transforms.Compose([transforms.Resize(256),
-                                    transforms.CenterCrop(256),
-                                    transforms.ToTensor()])
-    dataset = ImageFolder(path, transform=transform)
-    return dataset
-
-class GDiff_dataset(torch.utils.data.Dataset):
-    def __init__(self, dataset="cbsd68"):
+        else:
+            trans = transforms.Compose([transforms.ToTensor()])
         
-        if dataset =="imagenet_train":
-            self.dataset = ImageNet_dataset(split="train")
-        elif dataset =="imagenet_val":
-            self.dataset = ImageNet_dataset(split="val")
-        elif dataset =="cbsd68":
-            self.dataset = CBSD68_dataset()
-        elif dataset =="mcmaster":
-            self.dataset = McMaster_dataset()
-        elif dataset =="kodak24":
-            self.dataset = Kodak24_dataset()
+        if name in ["imagenet_train", "imagenet_val"]:
+            path = os.path.join("/tmp/imagenet/", name.split("_")[1])
+        elif name in ["CBSD68", "McMaster", "Kodak24"]:
+            path = os.path.join("./data/", name)
         else:
             raise NotImplementedError
-        self.dataset_len = len(self.dataset)
+        
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"Path {path} does not exist.")
+        self.dataset = ImageFolder(path, transform=trans)
 
     def __len__(self):
-        return self.dataset_len
+        return len(self.dataset)
 
     def __getitem__(self, item):
         return self.dataset[item]
 
+def get_colored_noise_2d(shape, phi=0, ret_psd=False, device=None):
+    """
+    Args:
+        shape: (int tuple or torch.Size) shape of the image
+        phi: (float or torch.Tensor of shape (B,1)) power spectrum exponent 
+        ret_psd: (bool) if True, return the power spectrum
+    Returns:
+        noise: colored noise
+        ps: power spectrum
+    """
+    if device is None:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    assert len(shape) == 4 # (B, C, H, W)
+    assert shape[2] == shape[3] # (B, C, H, W)
+    if isinstance(phi, float) or isinstance(phi, int):
+        phi = torch.tensor(phi).to(device).repeat(shape[0], 1)
+    else:
+        assert phi.shape == (shape[0], 1)
+    N = shape[2]
 
-def get_noise_level_estimate(y, sigma_min, sigma_max):
-    """ 
-    Estimate the noise level of the image y. Image y is assumed to take values in [0, 1].
-    Heuristic is calibrated for ImageNet and alpha in [-1, 1].
-    Please send me an email if you want the notebook for calibration."""
-    assert y.ndim == 4 or y.ndim == 3 # (N, C, H, W) or (C, H, W)
-    y_std = torch.std(y, dim=(-1, -2, -3))
-    sigma_est = y_std*1.15 - 0.17 # Heuristic from heuristic_sigma_estimation.ipynb for Imagenet
-    range_sigma = sigma_max - sigma_min
-    sigma_est = torch.clamp(sigma_est, min=sigma_min + 0.05*range_sigma, max=sigma_max - 0.05*range_sigma)
-    return sigma_est
+    wn = torch.fft.fftfreq(N).reshape((N, 1)).to(device)
+    S = torch.zeros((shape[0], shape[1], N, N)).to(device)
+    for i in range(2): ## we are in 2D
+        S += torch.moveaxis(wn, 0, i).pow(2)
+
+    S.pow_(phi.reshape(-1, 1, 1, 1).to(device)/2)
+    S[:, :, 0, 0] = 1.0
+    S.div_(torch.mean(S, dim=(-1, -2), keepdim=True))  # Normalize S to keep std = 1
+
+    X_white = torch.fft.fftn(torch.randn(shape).to(device), dim=(2,3))
+    X_shaped = X_white * torch.sqrt(S)
+    noises = torch.fft.ifftn(X_shaped, dim=(2,3)).real
+    
+    if ret_psd:
+        return noises, S
+    else:
+        return noises
