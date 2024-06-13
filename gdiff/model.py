@@ -363,7 +363,7 @@ class GDiff(pl.LightningModule):
                 return torch.mean(torch.norm(noisy_batch-batch_origin, dim = (-2,-1))), None
     
     
-def load_model(diffusion_steps=10000,
+def load_model(diffusion_steps=5000,
                in_size_image=256*256,
                n_channels=3,
                root_dir=None,
