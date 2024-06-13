@@ -5,6 +5,18 @@ from torch import nn
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
+def get_noise_level_estimate(y, sigma_min, sigma_max):
+    """
+    Rough estimate of the noise level in the image y (for initialization of the chains).
+    Image y is assumed to take values in [0, 1].
+    Heuristic is calibrated for ImageNet and alpha in [-1, 1]. """
+    assert y.ndim == 4 or y.ndim == 3 # (N, C, H, W) or (C, H, W)
+    y_std = torch.std(y, dim=(-1, -2, -3))
+    sigma_est = y_std*1.15 - 0.17 # Heuristic calibrated for Imagenet
+    range_sigma = sigma_max - sigma_min
+    sigma_est = torch.clamp(sigma_est, min=sigma_min + 0.05*range_sigma, max=sigma_max - 0.05*range_sigma)
+    return sigma_est
+
 def get_phi_bounds(device=None):
     phi_min = torch.tensor([-1]).to(device)
     phi_max = torch.tensor([1]).to(device)

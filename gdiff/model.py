@@ -4,9 +4,8 @@ import lightning as pl
 import math
 import os, glob
 from .modules import DoubleConv, Down, Up, OutConv, phi_embedding, SAWrapper
-from .utils import get_colored_noise_2d
+from .data import get_colored_noise_2d
 from . import utils_hmc as iut
-from .data import get_noise_level_estimate
 from tqdm import tqdm
 from .hmc import HMC
 
@@ -54,9 +53,6 @@ class GDiff(pl.LightningModule):
                  img_depth = 3, 
                  lr = 2e-4,
                  weight_decay = 0):
-        
-        
-       
 
         super().__init__()
         self.diffusion_steps = diffusion_steps
@@ -267,7 +263,7 @@ class GDiff(pl.LightningModule):
 
         # Initalization
         phi_0 = sample_phi_prior(num_samples*num_chains_per_sample)
-        sigma_0 = get_noise_level_estimate(y_batch, sigma_min, sigma_max).unsqueeze(-1) # sigma_0 is initalized with a rough estimate of the noise level
+        sigma_0 = iut.get_noise_level_estimate(y_batch, sigma_min, sigma_max).unsqueeze(-1) # sigma_0 is initalized with a rough estimate of the noise level
         phi_0 = torch.concatenate((phi_0, sigma_0), dim=-1) # Concatenate phi and sigma
 
         # Gibbs sampling
@@ -339,8 +335,6 @@ class GDiff(pl.LightningModule):
         """
         Returns the closest timestep to the given noise level. If ret_sigma is True, also returns the noise level corresponding to the closest timestep.
         """
-        
-
         alpha_bar_t = self.alpha_bar_t.to(noise_level.device)
         all_noise_levels = torch.sqrt((1-alpha_bar_t)/alpha_bar_t).reshape(-1, 1).repeat(1, noise_level.shape[0])
         closest_timestep = torch.argmin(torch.abs(all_noise_levels - noise_level), dim=0)
@@ -387,7 +381,6 @@ def load_model(diffusion_steps=10000,
     Returns:
         model: The loaded Gibbs Diffusion model.
     """
-    
     if root_dir is None:
         root_dir = "model_checkpoints/"
         model_dir = os.path.join(root_dir, f"GDiff_{diffusion_steps}steps/")
@@ -400,6 +393,3 @@ def load_model(diffusion_steps=10000,
                                         img_depth=n_channels) 
     model.to(device)
     return model
-
-
-

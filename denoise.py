@@ -4,14 +4,13 @@ import torch
 import bm3d
 import pickle
 from torch.utils.data import DataLoader, RandomSampler
-from gdiff_utils.data import GDiff_dataset
+from gdiff.data import ImageDataset, get_colored_noise_2d
 from tqdm import tqdm
-from gibbs_diffusion.model import load_model
-from gdiff_utils.utils import get_colored_noise_2d
+from gdiff.model import load_model
 
 from metrics.utils import integrated_error_PS, FID_score, psnr_skimage, ssim_skimage
 
-from gdiff_utils.network_dncnn import DnCNN as net
+from gdiff.network_dncnn import DnCNN as net
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 save_images = True
@@ -53,7 +52,7 @@ print("phis: ", phis)
 num_samples = 50
 batch_size = 25
 
-dataset = GDiff_dataset(dataset="cbsd68")
+dataset = ImageDataset("CBSD68")
 
 sampler = RandomSampler(dataset, replacement=False, num_samples=num_samples)
 dataloader = DataLoader(dataset, batch_size=batch_size, num_workers=4, sampler=sampler)

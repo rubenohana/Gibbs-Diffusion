@@ -1,9 +1,9 @@
 import torch
 import lightning as pl
-from gibbs_diffusion.model import GDiff
-from gibbs_diffusion.model import load_model as load_gdiff_model
+from gdiff.model import GDiff
+from gdiff.model import load_model as load_gdiff_model
 from torch.utils.data import DataLoader
-from gdiff_utils.data import GDiff_dataset
+from gdiff.data import ImageDataset
 import glob
 from lightning.pytorch.loggers import WandbLogger
 from lightning.pytorch.callbacks import ModelCheckpoint
@@ -56,15 +56,15 @@ def main(hparams):
     # Create datasets and data loaders
     if dataset_choice == 'ImageNet':
 
-        train_dataset = GDiff_dataset("imagenet_train")
-        val_dataset = GDiff_dataset("imagenet_val")
+        train_dataset = ImageDataset("imagenet_train")
+        val_dataset = ImageDataset("imagenet_val")
 
         n_channels, H, W = train_dataset[0][0].shape
         in_size_image = H * W
     else:
         #Careful, if you train on another dataset than imagenet, you will have to define yourself the train and validation sets in data.py
-        train_dataset = GDiff_dataset(dataset_choice)
-        val_dataset = GDiff_dataset(dataset_choice)
+        train_dataset = ImageDataset(dataset_choice)
+        val_dataset = ImageDataset(dataset_choice)
 
         n_channels, H, W = train_dataset[0][0].shape
         in_size_image = H * W
