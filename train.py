@@ -74,23 +74,22 @@ def main(hparams):
 
     # Create model and trainer
     if load_model:
-        model = load_gdiff_model(diffusion_steps=10000)
+        model = load_gdiff_model(diffusion_steps=5000)
     else:
-        model = GDiff(in_size = in_size_image, 
-                               diffusion_steps = diffusion_steps, 
-                               img_depth = n_channels, 
-                               lr = lr, 
-                               weight_decay = weight_decay)
+        model = GDiff(in_size=in_size_image, 
+                      diffusion_steps=diffusion_steps, 
+                      img_depth=n_channels, 
+                      lr=lr, 
+                      weight_decay=weight_decay)
 
     if wandb:
         wandb_logger = WandbLogger(project="diffusion-models", 
-                                   config = hyperparameters_config, 
-                                   entity = 'rubenohana', 
-                                   group= wandb_group_name, 
+                                   config=hyperparameters_config, 
+                                   entity='rubenohana', 
+                                   group=wandb_group_name, 
                                    name=f"{dataset_choice}_steps{diffusion_steps}_lr{lr}_bs{batch_size}_opt{optimizer}_wd{weight_decay}")
     if enable_ckpt:
-        checkpoint_callback = ModelCheckpoint(dirpath=default_root_dir, 
-                                          monitor=None)
+        checkpoint_callback = ModelCheckpoint(dirpath=default_root_dir, monitor=None)
     trainer = pl.Trainer(max_epochs=max_epoch, 
                         log_every_n_steps=10,
                         devices=n_devices, 

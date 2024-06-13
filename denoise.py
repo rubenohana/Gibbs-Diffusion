@@ -23,13 +23,13 @@ output_name = "output/denoising_imagenet_results_v4_script_high_noise.pkl"
 
 # DDPM
 model_gdiff = load_model(diffusion_steps=10000, device=device)
-model_gdiff.eval();
+model_gdiff.eval()
 
 # DnCNN, downloaded from https://github.com/cszn/KAIR/tree/master/model_zoo
 model_path = 'model_checkpoints/dncnn/dncnn_color_blind.pth'
 model_dncnn = net(in_nc=3, out_nc=3, nc=64, nb=20, act_mode='R')
 model_dncnn.load_state_dict(torch.load(model_path), strict=True)
-model_dncnn.eval();
+model_dncnn.eval()
 for k, v in model_dncnn.named_parameters():
     v.requires_grad = False
 model_dncnn = model_dncnn.to(device)

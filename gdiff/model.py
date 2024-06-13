@@ -147,7 +147,7 @@ class GDiff(pl.LightningModule):
 
         return output
 
-    def get_loss(self, batch, batch_idx, phi_ps = None):
+    def get_loss(self, batch, batch_idx, phi_ps=None):
         """
         Corresponds to Algorithm 1 from (Ho et al., 2020), but with colored noise.
         """
@@ -165,7 +165,7 @@ class GDiff(pl.LightningModule):
         if isinstance(phi_ps, float) or isinstance(phi_ps, int):
             phi_ps = phi_ps * torch.ones(bs,1).to(self.device) 
 
-        ts = torch.randint(0, self.diffusion_steps, (bs,1)).float().to(self.device)
+        ts = torch.randint(0, self.diffusion_steps, (bs, 1)).float().to(self.device)
         noise_imgs = []
 
         epsilons = get_colored_noise_2d(batch.shape, phi_ps, device= self.device) #B x C x H x W
@@ -257,7 +257,7 @@ class GDiff(pl.LightningModule):
                 p_ret[..., i][crossed_max_boundary] = -p[..., i][crossed_max_boundary]
             return p_ret
 
-        print("Normalized prior bounds are:", phi_min_norm, phi_max_norm)
+        #print("Normalized prior bounds are:", phi_min_norm, phi_max_norm)
 
         # Inference on the noise level \sigma and the parameters \varphi of the covariance of the noise
 
