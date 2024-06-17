@@ -5,7 +5,7 @@ import math
 import os, glob
 from .modules import DoubleConv, Down, Up, OutConv, phi_embedding, SAWrapper
 from .data import get_colored_noise_2d
-from . import utils_hmc as iut
+from . import hmc_utils as iut
 from tqdm import tqdm
 from .hmc import HMC
 
@@ -50,9 +50,9 @@ class GDiff(pl.LightningModule):
     def __init__(self,
                  in_size, 
                  diffusion_steps, 
-                 img_depth = 3, 
-                 lr = 2e-4,
-                 weight_decay = 0):
+                 img_depth=3, 
+                 lr=2e-4,
+                 weight_decay=0):
 
         super().__init__()
         self.diffusion_steps = diffusion_steps
@@ -174,7 +174,7 @@ class GDiff(pl.LightningModule):
 
         return loss
 
-    def denoise_1step(self, x, t, phi_ps = None):
+    def denoise_1step(self, x, t, phi_ps=None):
         """
         Denoises one step given an phi (if phi_ps=None, it is sampled uniformly in [-1,1]) and a timestep t.
         """
@@ -317,7 +317,7 @@ class GDiff(pl.LightningModule):
                          num_chains_per_sample=5,
                          n_it_gibbs=30,
                          n_it_burnin=10, 
-                         avg_pmean = 10,
+                         avg_pmean=10,
                          return_chains=True):
         '''Performs blind denoising with the posterior mean estimator.'''
         if return_chains:
@@ -343,7 +343,7 @@ class GDiff(pl.LightningModule):
         else:
             return closest_timestep
 
-    def denoise_samples_batch_time(self, noisy_batch, timesteps, batch_origin=None, return_sample = False, phi_ps = None):
+    def denoise_samples_batch_time(self, noisy_batch, timesteps, batch_origin=None, return_sample=False, phi_ps=None):
         """
         Denoises a batch of images for a given number of timesteps (which can be different across the batch).
         """
@@ -361,7 +361,7 @@ class GDiff(pl.LightningModule):
                 return torch.mean(torch.norm(noisy_batch-batch_origin, dim = (-2,-1))), noisy_batch
             else:
                 return torch.mean(torch.norm(noisy_batch-batch_origin, dim = (-2,-1))), None
-    
+
     
 def load_model(diffusion_steps=5000,
                in_size_image=256*256,

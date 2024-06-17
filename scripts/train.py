@@ -1,14 +1,17 @@
 import torch
 import lightning as pl
-from gdiff.model import GDiff
-from gdiff.model import load_model as load_gdiff_model
-from torch.utils.data import DataLoader
-from gdiff.data import ImageDataset
-import glob
 from lightning.pytorch.loggers import WandbLogger
 from lightning.pytorch.callbacks import ModelCheckpoint
+from torch.utils.data import DataLoader
 from argparse import ArgumentParser
-import os
+import os, sys
+
+sys.path.append('../')
+
+from gdiff.model import GDiff
+from gdiff.model import load_model as load_gdiff_model
+from gdiff.data import ImageDataset
+
 
 def main(hparams):
     # Training hyperparameters
@@ -21,7 +24,6 @@ def main(hparams):
     lr = hparams.learning_rate
     weight_decay = hparams.weight_decay
     accelerator = hparams.accelerator
-    wandb_group_name = hparams.wandb_group_name
     enable_ckpt = hparams.enable_ckpt
 
     #To be saved in wandb
@@ -39,19 +41,12 @@ def main(hparams):
     # Loading parameters
     load_model = hparams.load_model
 
-
-    #Use wandb or not
-    wandb = hparams.wandb
-
     #directory where to store the checkpoints:
-    default_root_dir=f"./model_checkpoints/{dataset_choice}_training/{diffusion_steps}steps_{optimizer}_{lr}lr_{batch_size}bs_{max_epoch}epochs/"
+    default_root_dir=f"../model_checkpoints/{dataset_choice}_training/{diffusion_steps}steps_{optimizer}_{lr}lr_{batch_size}bs_{max_epoch}epochs/"
 
     #make directory if not existing:
     if not os.path.exists(default_root_dir):
         os.makedirs(default_root_dir, exist_ok=True)
-    
-    #default_root_dir=f"./ckpt_hyperparam_tuning/{dataset_choice}/{diffusion_steps}_steps_{optimizer}_{lr}_lr/lightning_logs/version_{pass_version}/checkpoints/"
-        
     
     # Create datasets and data loaders
     if dataset_choice == 'ImageNet':
@@ -62,7 +57,7 @@ def main(hparams):
         n_channels, H, W = train_dataset[0][0].shape
         in_size_image = H * W
     else:
-        #Careful, if you train on another dataset than imagenet, you will have to define yourself the train and validation sets in data.py
+        #If you train on another dataset than imagenet, you will have to define yourself the train and validation sets in data.py
         train_dataset = ImageDataset(dataset_choice)
         val_dataset = ImageDataset(dataset_choice)
 
@@ -82,11 +77,11 @@ def main(hparams):
                       lr=lr, 
                       weight_decay=weight_decay)
 
-    if wandb:
-        wandb_logger = WandbLogger(project="diffusion-models", 
+    if hparams.wandb:
+        wandb_logger = WandbLogger(project=hparams.wandb_project, 
                                    config=hyperparameters_config, 
-                                   entity='rubenohana', 
-                                   group=wandb_group_name, 
+                                   entity=hparams.wandb_entity, 
+                                   group=hparams.wandb_group_name, 
                                    name=f"{dataset_choice}_steps{diffusion_steps}_lr{lr}_bs{batch_size}_opt{optimizer}_wd{weight_decay}")
     if enable_ckpt:
         checkpoint_callback = ModelCheckpoint(dirpath=default_root_dir, monitor=None)
@@ -94,7 +89,7 @@ def main(hparams):
                         log_every_n_steps=10,
                         devices=n_devices, 
                         accelerator= accelerator, 
-                        logger= wandb_logger if wandb else None,
+                        logger= wandb_logger if hparams.wandb else None,
                         callbacks=[checkpoint_callback] if enable_ckpt else None)
 
     trainer.fit(model, train_loader, val_loader)
@@ -113,11 +108,13 @@ if __name__ == "__main__":
     parser.add_argument("--max_epoch", default=10, type=int)
     parser.add_argument("--batch_size", default=128, type=int)
     #Logging Wandb
-    parser.add_argument("--wandb", default=False, type = bool)
-    parser.add_argument("--wandb_group_name", default="Hyperparameter_tuning", type=str)
+    parser.add_argument("--wandb", default=False, type=bool)
+    parser.add_argument("--wandb_group_name", default="gdiff", type=str)
+    parser.add_argument("--wandb_entity", default="####", type=str)
+    parser.add_argument("--wandb_project", default="gdiff", type=str)
     #Model checkpointing
-    parser.add_argument("--enable_ckpt", default=True, type = bool)
-    parser.add_argument("--load_model", default=False, type = bool)
+    parser.add_argument("--enable_ckpt", default=True, type=bool)
+    parser.add_argument("--load_model", default=False, type=bool)
 
     args = parser.parse_args()
     main(args)

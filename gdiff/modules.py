@@ -111,4 +111,3 @@ class phi_embedding(nn.Module):
         
     def forward(self, alpha):
         return self.mlp(alpha)
-        

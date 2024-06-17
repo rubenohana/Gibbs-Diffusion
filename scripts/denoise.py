@@ -3,62 +3,76 @@ import numpy as np
 import torch
 import bm3d
 import pickle
+from tqdm import tqdm
 from torch.utils.data import DataLoader, RandomSampler
 from gdiff.data import ImageDataset, get_colored_noise_2d
-from tqdm import tqdm
 from gdiff.model import load_model
+from gdiff.utils import psnr, ssim
 
-from metrics.utils import integrated_error_PS, FID_score, psnr_skimage, ssim_skimage
 
-from gdiff.network_dncnn import DnCNN as net
+#
+# Parameters
+#
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
+# Dataset
+dataset_name = "CBSD68"
+num_samples = 50
+batch_size = 25
+
+# Sigmas and phis
+sigmas = [0.2]
+phis = [-1, 0, 1]
+
+# Model
+gdiff_model_diffusion_steps = 5000
+
+# For comparison to DnCNN, you will need to clone KAIR repository somewhere (git clone https://github.com/cszn/KAIR.git)
+# and set the path to the KAIR directory.
+kair_dir = None # Path to KAIR directory
+
 save_images = True
-output_name = "output/denoising_imagenet_results_v4_script_high_noise.pkl"
+output_name = f"denoising_results_{dataset_name}.pkl"
 
 #
 # Load models
 #
 
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
 # DDPM
-model_gdiff = load_model(diffusion_steps=10000, device=device)
-model_gdiff.eval()
+model_gdiff = load_model(diffusion_steps=gdiff_model_diffusion_steps, device=device)
+model_gdiff.eval();
 
-# DnCNN, downloaded from https://github.com/cszn/KAIR/tree/master/model_zoo
-model_path = 'model_checkpoints/dncnn/dncnn_color_blind.pth'
-model_dncnn = net(in_nc=3, out_nc=3, nc=64, nb=20, act_mode='R')
-model_dncnn.load_state_dict(torch.load(model_path), strict=True)
-model_dncnn.eval()
-for k, v in model_dncnn.named_parameters():
-    v.requires_grad = False
-model_dncnn = model_dncnn.to(device)
+# DnCNN
+if kair_dir is not None:
+    sys.path.append(kair_dir)
+    from models.network_dncnn import DnCNN as net
+    model_path = os.path.join(kair_dir, 'model_zoo', 'dncnn_color_blind.pth') # This would need to be downloaded from the KAIR repository
+    model_dncnn = net(in_nc=3, out_nc=3, nc=64, nb=20, act_mode='R')
+    model_dncnn.load_state_dict(torch.load(model_path), strict=True)
+    model_dncnn.eval();
+    for k, v in model_dncnn.named_parameters():
+        v.requires_grad = False
+    model_dncnn = model_dncnn.to(device)
 
 #
-# Sigmas and phis
+# Denoising
 #
 
-sigmas = [0.2]
+dataset = ImageDataset(dataset_name)
+sampler = RandomSampler(dataset, replacement=False, num_samples=num_samples)
+dataloader = DataLoader(dataset, batch_size=batch_size, num_workers=4, sampler=sampler)
+
 sigmas = [model_gdiff.get_closest_timestep(torch.tensor([s]).to(device), ret_sigma=True)[1].item() for s in sigmas]
 sigmas_uint8 = [int(s*255) for s in sigmas]
-phis = [-1, 0, 1]
 print("Sigmas: ", sigmas)
 print("Sigmas (in uint8 unit)", sigmas_uint8)
 print("phis: ", phis)
 
-#
-# Dataset and batch size
-#
-
-num_samples = 50
-batch_size = 25
-
-dataset = ImageDataset("CBSD68")
-
-sampler = RandomSampler(dataset, replacement=False, num_samples=num_samples)
-dataloader = DataLoader(dataset, batch_size=batch_size, num_workers=4, sampler=sampler)
-
-algos = ["ddpm_blind", "ddpm_pmean", "bm3d", "dncnn"]
-metrics = ["psnr", "ssim", "IPS"] 
+algos = ["ddpm_blind", "ddpm_pmean", "bm3d"]
+if kair_dir is not None:
+    algos.append("dncnn") # Add DnCNN to the list of algorithms if it is available
+metrics = ["psnr", "ssim"]
 
 res_dict = {}
 
@@ -135,13 +149,9 @@ for sigma_idx, sigma in enumerate(sigmas):
                 for metric in metrics:
                     score = None
                     if metric == "psnr":
-                        score = psnr_skimage(x, x_denoised)
+                        score = psnr(x, x_denoised)
                     elif metric == "ssim":
-                        score = ssim_skimage(x, x_denoised)
-                    elif metric == "fid": # TOFIX: infs or NaN
-                        score = FID_score(x, x_denoised)
-                    elif metric == "IPS":
-                        score = integrated_error_PS(x, x_denoised)
+                        score = ssim(x, x_denoised)
                     else:
                         raise ValueError("Unknown metric")
                     res_dict[algo][metric][sigma_idx, phi_idx, x_id*batch_size:x_id*batch_size+score.shape[0]] = score

@@ -5,7 +5,7 @@ from torchvision import transforms
 
 
 class ImageDataset(torch.utils.data.Dataset):
-    def __init__(self, name="cbsd68", transform=True):
+    def __init__(self, name="CBSD68", transform=True):
         if transform:
             trans = transforms.Compose([transforms.Resize(256),
                                         transforms.CenterCrop(256),
