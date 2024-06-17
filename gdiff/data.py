@@ -5,7 +5,7 @@ from torchvision import transforms
 
 
 class ImageDataset(torch.utils.data.Dataset):
-    def __init__(self, name="CBSD68", transform=True):
+    def __init__(self, name="CBSD68", transform=True, data_dir='./data/'):
         if transform:
             trans = transforms.Compose([transforms.Resize(256),
                                         transforms.CenterCrop(256),
@@ -15,9 +15,9 @@ class ImageDataset(torch.utils.data.Dataset):
             trans = transforms.Compose([transforms.ToTensor()])
         
         if name in ["imagenet_train", "imagenet_val"]:
-            path = os.path.join("/tmp/imagenet/", name.split("_")[1])
+            path = os.path.join(data_dir, name.split("_")[1])
         elif name in ["CBSD68", "McMaster", "Kodak24"]:
-            path = os.path.join("./data/", name)
+            path = os.path.join(data_dir, name)
         else:
             raise NotImplementedError
         

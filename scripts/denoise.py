@@ -117,7 +117,9 @@ for sigma_idx, sigma in enumerate(sigmas):
                 print("Denoising with ", algo)
                 x_denoised = None
                 if algo == "ddpm":
-                    x_denoised = model_gdiff.denoise_samples_batch_time(yt, torch.tensor(sigma_timestep).unsqueeze(0).repeat(yt.shape[0]), phi_ps=phi)
+                    x_denoised = model_gdiff.denoise_samples_batch_time(yt,
+                                                                        torch.tensor(sigma_timestep).unsqueeze(0).repeat(yt.shape[0]),
+                                                                        phi_ps=phi)
                 elif algo == "ddpm_pmean":
                     if "ddpm_blind" in algos and x_denoised_pmean is not None:
                         print("Using pmean computed on ddpm_blind samples")
@@ -125,11 +127,14 @@ for sigma_idx, sigma in enumerate(sigmas):
                         x_denoised_pmean = None
                     else:
                         repeat = 20
-                        x_denoised = model_gdiff.denoise_samples_batch_time(yt.repeat(repeat, 1, 1, 1), torch.tensor(sigma_timestep).unsqueeze(0).repeat(yt.shape[0]*repeat), phi_ps=phi)
+                        x_denoised = model_gdiff.denoise_samples_batch_time(yt.repeat(repeat, 1, 1, 1),
+                                                                            torch.tensor(sigma_timestep).unsqueeze(0).repeat(yt.shape[0]*repeat),
+                                                                            phi_ps=phi)
                         x_denoised = x_denoised.reshape(repeat, yt.shape[0], 3, yt.shape[2], yt.shape[3]).mean(dim=0)
                 elif algo == "ddpm_blind":
                     num_chains_per_sample = 5
-                    phi_all, x_all = model_gdiff.blind_denoising(y, yt, num_chains_per_sample=num_chains_per_sample)
+                    phi_all, x_all = model_gdiff.blind_denoising(y, yt,
+                                                                 num_chains_per_sample=num_chains_per_sample)
                     x_denoised = x_all[:yt.shape[0], -1] # We take the last samples of the first series of chains
                     x_denoised_pmean = x_all[:, -10:].reshape(num_chains_per_sample, -1, 10, 3, 256, 256).mean(dim=(0, 2))
                 elif algo == "bm3d":

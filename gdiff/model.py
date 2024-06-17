@@ -382,10 +382,8 @@ def load_model(diffusion_steps=5000,
         model: The loaded Gibbs Diffusion model.
     """
     if root_dir is None:
-        root_dir = "model_checkpoints/"
-        model_dir = os.path.join(root_dir, f"GDiff_{diffusion_steps}steps/")
-    else:
-        model_dir = root_dir
+        root_dir = "./model_checkpoints/"
+    model_dir = os.path.join(root_dir, f"GDiff_{diffusion_steps}steps/")
     ckpt_dir = glob.glob(model_dir + "*.ckpt")[-1]
     model = GDiff.load_from_checkpoint(ckpt_dir, 
                                         in_size=in_size_image, 
