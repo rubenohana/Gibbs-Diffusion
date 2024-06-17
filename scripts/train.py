@@ -51,15 +51,15 @@ def main(hparams):
     # Create datasets and data loaders
     if dataset_choice == 'ImageNet':
 
-        train_dataset = ImageDataset("imagenet_train")
-        val_dataset = ImageDataset("imagenet_val")
+        train_dataset = ImageDataset("imagenet_train", data_dir='/tmp/imagenet/')
+        val_dataset = ImageDataset("imagenet_val", data_dir='/tmp/imagenet/')
 
         n_channels, H, W = train_dataset[0][0].shape
         in_size_image = H * W
     else:
         #If you train on another dataset than imagenet, you will have to define yourself the train and validation sets in data.py
-        train_dataset = ImageDataset(dataset_choice)
-        val_dataset = ImageDataset(dataset_choice)
+        train_dataset = ImageDataset(dataset_choice, data_dir='../data/')
+        val_dataset = ImageDataset(dataset_choice, data_dir='../data/')
 
         n_channels, H, W = train_dataset[0][0].shape
         in_size_image = H * W
