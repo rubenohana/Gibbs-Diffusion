@@ -5,6 +5,9 @@ import bm3d
 import pickle
 from tqdm import tqdm
 from torch.utils.data import DataLoader, RandomSampler
+
+sys.path.append('../')
+
 from gdiff.data import ImageDataset, get_colored_noise_2d
 from gdiff.model import load_model
 from gdiff.utils import psnr, ssim
@@ -26,6 +29,9 @@ phis = [-1, 0, 1]
 # Model
 gdiff_model_diffusion_steps = 5000
 
+# GDiff
+num_chains_per_sample = 5
+
 # For comparison to DnCNN, you will need to clone KAIR repository somewhere (git clone https://github.com/cszn/KAIR.git)
 # and set the path to the KAIR directory.
 kair_dir = None # Path to KAIR directory
@@ -40,7 +46,9 @@ output_name = f"denoising_results_{dataset_name}.pkl"
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # DDPM
-model_gdiff = load_model(diffusion_steps=gdiff_model_diffusion_steps, device=device)
+model_gdiff = load_model(diffusion_steps=gdiff_model_diffusion_steps,
+                         device=device,
+                         root_dir='../model_checkpoints/')
 model_gdiff.eval();
 
 # DnCNN
@@ -59,7 +67,8 @@ if kair_dir is not None:
 # Denoising
 #
 
-dataset = ImageDataset(dataset_name)
+dataset = ImageDataset(dataset_name,
+                       data_dir='../data/')
 sampler = RandomSampler(dataset, replacement=False, num_samples=num_samples)
 dataloader = DataLoader(dataset, batch_size=batch_size, num_workers=4, sampler=sampler)
 
@@ -132,7 +141,6 @@ for sigma_idx, sigma in enumerate(sigmas):
                                                                             phi_ps=phi)
                         x_denoised = x_denoised.reshape(repeat, yt.shape[0], 3, yt.shape[2], yt.shape[3]).mean(dim=0)
                 elif algo == "ddpm_blind":
-                    num_chains_per_sample = 5
                     phi_all, x_all = model_gdiff.blind_denoising(y, yt,
                                                                  num_chains_per_sample=num_chains_per_sample)
                     x_denoised = x_all[:yt.shape[0], -1] # We take the last samples of the first series of chains
