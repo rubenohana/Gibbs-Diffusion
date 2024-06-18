@@ -14,7 +14,7 @@ The method demonstrated here is similar to the one used for the cosmology applic
 
 --------------------
 
-GDiff is a blind denoising method addressing posterior sampling of both signal and noise parameters. It relies on a Gibbs sampler that alternates sampling steps with a pretrained diffusion model (which defines the signal prior) and a Hamiltonian Monte Carlo sampler. Our paper presents applications in natural image denoising and cosmology (analysis of the cosmic microwave background).
+GDiff is a Bayesian blind denoising method addressing posterior sampling of both signal and noise parameters. It relies on a Gibbs sampler that alternates sampling steps with a pretrained diffusion model (which defines the signal prior) and a Hamiltonian Monte Carlo sampler. Our paper presents applications in natural image denoising and cosmology (analysis of the cosmic microwave background).
 
 Concretely, given a noisy observation $y = x + \varepsilon$, with $\varepsilon \sim \mathcal{N}(0, \Sigma_\phi)$, GDiff enables the sampling of the posterior distribution $p(x, \phi \mid y)$ for arbitrary diffusion-based signal prior $p(x)$.
 
@@ -51,6 +51,8 @@ You can alternatively download the models on this [Google Drive](https://drive.g
 ### Demo Notebook
 
 In the `nbs/` folder, we provide a [demo notebook](nbs/gdiff_demo.ipynb) showing how to use this code base to quickly perform blind denoising with GDiff.
+
+Keep in mind that the computational cost of the inference highly depends on the chosen parameters and the model. Notably, it scales linearly with the number of Gibbs iterations and the total number of diffusion steps (intrinsic to the diffusion model here). It also depends on the initial noise level (the noisier the data, the longer the inference), the initialization strategy of the chains, and the dimensionality of the problem. The number of Gibbs iterations needed to converge to the target posterior distribution is typically determined empirically. In this example, this number was found to be quite low (i.e. about 50 iterations).
 
 ### Training Script
 
