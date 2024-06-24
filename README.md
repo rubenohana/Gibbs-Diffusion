@@ -25,7 +25,7 @@ In this repository, we showcase our method for the denoising of natural images i
 <img width="1000px"  src="figs/denoising_example.png">
 </p>
 
-*This prior remains relevant for the denoising of noisy BSD68 and Kodak24 images (*$\sigma = 0.2$ *and* $\varphi \in \{-0.4, 0, 0.4\}$*):*
+*This prior remains relevant for the denoising of noisy BSD68 and Kodak24 images (*$\sigma = 0.2$ *and* $\varphi \in$ { $-0.4, 0, 0.4$ } *):*
 
 <img src="figs/denoising_effect1.gif" width="270px"/> <img src="figs/denoising_effect3.gif" width="270px"/> <img src="figs/denoising_effect2.gif" width="270px"/>
 
